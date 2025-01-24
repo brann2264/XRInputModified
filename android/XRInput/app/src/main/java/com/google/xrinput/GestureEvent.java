@@ -96,11 +96,11 @@ public class GestureEvent {
         for (int i = 0; i < numBackSlashes; i++){
             gestureStack.add(new BackSlash());
         }
-        for (int i = 0; i < numCircles; i++){
-            gestureStack.add(new Circle());
-        }
         for (int i = 0; i < numStatics; i++){
             gestureStack.add(new Static());
+        }
+        for (int i = 0; i < numCircles; i++){
+            gestureStack.add(new Circle());
         }
         nextGesture();
     }
@@ -141,6 +141,7 @@ public class GestureEvent {
 
         if (!circleActive) {
             if (targetX != -1 && targetY != -1) {
+
                 float distance = (float) Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
                 if (distance <= 50) {
                     nextGesture();

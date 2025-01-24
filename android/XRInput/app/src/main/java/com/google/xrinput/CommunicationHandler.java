@@ -219,6 +219,13 @@ public class CommunicationHandler {
   }
 
   /** Touch Messages */
+  public void sendGesturePathActivity(){
+    String msg = ;
+
+    if (transceiver != null){
+      transceiver.sendData(msg);
+    }
+  }
   public void sendTouchDown(Touch touch) {
     String msg =
         "TOUCH_DOWN,"
