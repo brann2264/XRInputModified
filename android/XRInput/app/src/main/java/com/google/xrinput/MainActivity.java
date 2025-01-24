@@ -16,6 +16,12 @@
 
 package com.google.xrinput;
 
+import android.text.InputType;
+import android.widget.ImageView;
+import android.graphics.Canvas;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -32,6 +38,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,6 +74,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -93,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private TextView orientationText;
   private Button connectButton;
   private Button editHMDaddressButton;
+  private Button activityButton;
   private Switch toggleARCoreSwitch;
   private String hmdIPstring = "192.168.0.1";
   private GradientDrawable connectionIndicator;
@@ -108,6 +117,9 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private boolean sendingDataFlag = false;
   private int tapsToStopConnection = 8;
   private int tapsRemainingToStopConnection = tapsToStopConnection;
+  private ImageView inputArea;
+
+  private GestureEvent gestureEvent;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -232,7 +244,6 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
   private void initTouchHandler() {
     touchHandler = new TouchHandler(this, communicationHandler);
-
     // we created a view that lives in front of the display to capture all touch events
     View rootView = findViewById(R.id.touchview);
     rootView.setOnTouchListener(touchHandler);
@@ -266,14 +277,99 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
       });
     }
   }
+  public void promptUser() {
+    // Create a vertical layout for multiple input fields
+    LinearLayout layout = new LinearLayout(this);
+    layout.setOrientation(LinearLayout.VERTICAL);
+
+    // Create 6 input fields
+    final EditText[] inputFields = new EditText[6];
+    final String[] labels = {"Horizontal Line", "Vertical Line", "Slash", "BackSlash", "Circle", "Static"};
+
+    for (int i = 0; i < 6; i++) {
+      TextView label = new TextView(this);
+      label.setText(labels[i]);
+      layout.addView(label);
+
+      EditText inputField = new EditText(this);
+      inputField.setInputType(InputType.TYPE_CLASS_NUMBER);
+      layout.addView(inputField);
+
+      inputFields[i] = inputField; // Store reference to each input field
+    }
+
+    // Build the dialog
+    new AlertDialog.Builder(this)
+            .setTitle("Customize Gesture Counts")
+            .setView(layout) // Set the custom layout
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                int[] numbers = new int[6];
+                boolean allValid = true;
+
+                for (int i = 0; i < 6; i++) {
+                  String input = inputFields[i].getText().toString();
+                  if (!input.isEmpty()) {
+                    try {
+                      numbers[i] = Integer.parseInt(input); // Parse each input
+                    } catch (NumberFormatException e) {
+                      Toast.makeText(MainActivity.this, "Invalid number for " + labels[i], Toast.LENGTH_SHORT).show();
+                      allValid = false;
+                      break;
+                    }
+                  } else {
+                    Toast.makeText(MainActivity.this, "Input for " + labels[i] + " is empty", Toast.LENGTH_SHORT).show();
+                    allValid = false;
+                    break;
+                  }
+                }
+
+                if (allValid) {
+                  Toast.makeText(MainActivity.this, "All inputs collected: " + Arrays.toString(numbers), Toast.LENGTH_LONG).show();
+                  processNumbers(numbers); // Process the collected numbers
+                }
+              }
+            })
+            .setNegativeButton("Cancel", null) // Allow canceling
+            .show();
+  }
+
+  private void processNumbers(int[] numbers) {
+    gestureEvent.setCounts(numbers);
+    gestureEvent.start();
+  }
 
   private void initUI() {
     // Load last HMD IP Address from memory
     SharedPreferences sharedPref = getSharedPreferences("DeviceInputXRPreferences", MODE_PRIVATE);
     hmdIPstring = sharedPref.getString("hmdIPstring", hmdIPstring);
 
+    // Initialize event background
+
+//    ImageView imageView = findViewById(R.id.image_view);
+    ImageView drawView = findViewById(R.id.draw_view);
+    ImageView touchView = findViewById(R.id.touchview);
+    touchView.post(new Runnable() {
+      @Override
+      public void run() {
+        // Now the ImageView is fully laid out, and its dimensions are set
+        gestureEvent = new GestureEvent(touchView, drawView);
+        touchHandler.setGestureEvent(gestureEvent);
+      }
+    });
+
     // Initialize buttons
     connectButton = findViewById(R.id.connect_button);
+    activityButton = findViewById(R.id.activity_button);
+    activityButton.setOnClickListener(
+            new View.OnClickListener() {
+              @Override
+              public void onClick(View v) {
+                  promptUser();
+              }
+            });
+
     connectButton.setOnClickListener(
         new View.OnClickListener() {
           @Override
@@ -291,6 +387,9 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
               editHMDaddressButton.setEnabled(false);
               toggleARCoreSwitch.setClickable(false);
               toggleARCoreSwitch.setEnabled(false);
+
+              activityButton.setClickable(true);
+              activityButton.setTextColor(Color.WHITE);
             }
           }
         });

@@ -23,6 +23,8 @@ import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.widget.TextView;
+
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -34,6 +36,7 @@ public class TouchHandler
         ScaleGestureDetector.OnScaleGestureListener {
   private final String TAG = TouchHandler.class.getSimpleName();
   private CommunicationHandler communicationHandler;
+  private GestureEvent gestureEvent;
 
   private HashMap<Integer, Touch> touches = new HashMap<>();
   private GestureDetector gestureDetector;
@@ -59,11 +62,17 @@ public class TouchHandler
     initNewTapCountTimerTask();
   }
 
+  public void setGestureEvent(GestureEvent gestureEvent){
+    this.gestureEvent = gestureEvent;
+  }
+
   @Override
   public boolean onTouch(View v, MotionEvent event) {
     int index = event.getActionIndex();
     int pointerId = event.getPointerId(index);
     currentView = v;
+
+    gestureEvent.processTouchEvent(event);
 
     switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN:
