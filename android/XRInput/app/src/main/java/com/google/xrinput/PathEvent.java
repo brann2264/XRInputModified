@@ -16,21 +16,18 @@ import android.os.Handler;
 
 
 public class PathEvent {
-    private Canvas background;
-    private Bitmap bitmap;
-    private ImageView image_view;
+    private final Canvas background;
+    private final Bitmap bitmap;
+    private final ImageView image_view;
     final private int width;
     final private int height;
     final private Random random;
-    private boolean circleActive = false;
 
     private Path gesturePath;
     private Paint gesturePathPaint;
     private Paint erasePaint;
     private Paint gestureShapePaint;
 
-    private int targetX = -1;
-    private int targetY = -1;
     private List<PathShape> gestureStack;
 
     private int numHorizontalLines;
@@ -41,15 +38,14 @@ public class PathEvent {
     private int numStatics;
     private final int BORDER = 0;
     private int MIN_LENGTH = 50;
-
-    public boolean complete = false;
-    private ImageView draw_view;
-    private Bitmap drawBitmap;
-    private Canvas drawArea;
-    private Paint arrowPaint;
+    private final ImageView draw_view;
+    private final Bitmap drawBitmap;
+    private final Canvas drawArea;
+    private final Paint arrowPaint;
     private int[] locationOnScreen;
     public PathShape active;
     private boolean gesturePathBool = true;
+    private boolean terminate = false;
 
     public PathEvent(ImageView display, ImageView drawView){
 //        set some variables
@@ -63,29 +59,34 @@ public class PathEvent {
         background = new Canvas(bitmap);
         drawArea = new Canvas(drawBitmap);
         random = new Random();
+
         gesturePath = new Path();
         gesturePathPaint = new Paint();
-        gesturePathPaint.setColor(0x80FFFFFF);
+        gesturePathPaint.setColor(Color.argb(16, 255, 255, 255));
         gesturePathPaint.setAntiAlias(true);
-        gesturePathPaint.setStrokeWidth(50);
+        gesturePathPaint.setStrokeWidth(15);
         gesturePathPaint.setStyle(Paint.Style.STROKE);
         gesturePathPaint.setStrokeJoin(Paint.Join.ROUND);
         gesturePathPaint.setStrokeCap(Paint.Cap.ROUND);
+
         erasePaint = new Paint();
         erasePaint.setColor(Color.TRANSPARENT);
         erasePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
         erasePaint.setAntiAlias(true);
-        erasePaint.setStrokeWidth(52);
+        erasePaint.setStrokeWidth(17);
         erasePaint.setStyle(Paint.Style.STROKE);
         erasePaint.setStrokeJoin(Paint.Join.ROUND);
         erasePaint.setStrokeCap(Paint.Cap.ROUND);
+
         gestureShapePaint = new Paint();
-        gestureShapePaint.setColor(Color.BLUE); // Set paint color
-        gestureShapePaint.setStrokeWidth(5);    // Set paint stroke width
+        gestureShapePaint.setColor(Color.GREEN);
+        gestureShapePaint.setStrokeWidth(25);
+        gestureShapePaint.setStrokeCap(Paint.Cap.ROUND);
+
         gestureStack = new ArrayList<>();
         arrowPaint = new Paint();
         arrowPaint.setColor(Color.RED);
-        arrowPaint.setStrokeWidth(50);
+        arrowPaint.setStrokeWidth(15);
         arrowPaint.setStyle(Paint.Style.FILL);
         arrowPaint.setStrokeJoin(Paint.Join.ROUND);
 
@@ -95,27 +96,39 @@ public class PathEvent {
 
     public void start(){
         gestureStack.clear();
-
-        for (int i = 0; i < numHorizontalLines; i++){
-            gestureStack.add(new HorizontalLine());
-        }
-        for (int i = 0; i < numVerticalLines; i++){
-            gestureStack.add(new VerticalLine());
-        }
-        for (int i = 0; i < numSlashes; i++){
-            gestureStack.add(new Slash());
-        }
-        for (int i = 0; i < numBackSlashes; i++){
-            gestureStack.add(new BackSlash());
-        }
+        terminate = false;
+        gestureStack.add(new FreeForm());
         for (int i = 0; i < numStatics; i++){
             gestureStack.add(new Static());
         }
         for (int i = 0; i < numCircles; i++){
             gestureStack.add(new Circle());
         }
+        for (int i = 0; i < numBackSlashes; i++){
+            gestureStack.add(new BackSlash());
+        }
+        for (int i = 0; i < numSlashes; i++){
+            gestureStack.add(new Slash());
+        }
+        for (int i = 0; i < numVerticalLines; i++){
+            gestureStack.add(new VerticalLine());
+        }
+        for (int i = 0; i < numHorizontalLines; i++){
+            gestureStack.add(new HorizontalLine());
+        }
+
         nextPath();
     }
+
+    public void terminate(){
+        terminate = true;
+    }
+
+    private void updateLocations(){
+        locationOnScreen = new int[2];
+        image_view.getLocationOnScreen(locationOnScreen);
+    }
+
 
     public void setCounts(int[] counts){
         numHorizontalLines = counts[0];
@@ -128,14 +141,23 @@ public class PathEvent {
 
     private void nextPath(){
         background.drawColor(Color.BLACK);
+        updateLocations();
+
+        if (terminate){
+            return;
+        }
         if (!gestureStack.isEmpty()){
             PathShape curr = gestureStack.remove(gestureStack.size()-1);
             active = curr;
             curr.draw();
-            new Handler().postDelayed(this::clearCanvas, 5000);
-            new Handler().postDelayed(this::nextPath, 3000);
-        } else {
-            complete = true;
+
+            if (curr instanceof FreeForm){
+                new Handler().postDelayed(this::clearCanvas, 60000);
+                new Handler().postDelayed(this::nextPath, 61000);
+            } else {
+                new Handler().postDelayed(this::clearCanvas, 5000);
+                new Handler().postDelayed(this::nextPath, 8000);
+            }
         }
     }
 
@@ -159,48 +181,14 @@ public class PathEvent {
         float x = event.getX();
         float y = event.getY();
 
-//// Get the position of image_view on the screen (top-left corner of the image view)
-//        int[] location = new int[2];
-//        image_view.getLocationOnScreen(location);
-//
-//// Scale factor handling (if image_view is scaled, adjust coordinates)
-//        float scaleX = image_view.getWidth() / (float) image_view.getMeasuredWidth();
-//        float scaleY = image_view.getHeight() / (float) image_view.getMeasuredHeight();
-//
-//// Adjust touch coordinates for scaling
-//        float x = (touchX - location[0]) / scaleX;
-//        float y = (touchY - location[1]) / scaleY;
-
-//        if (!circleActive) {
-//            if (targetX != -1 && targetY != -1) {
-//
-//                float distance = (float) Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
-//                if (distance <= 50) {
-//                    nextGesture();
-//                }
-//            }
-//        }
-
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 gesturePath.moveTo(x, y); // Start a new path at the touch point
-
-                if (circleActive){
-                    targetX = (int)x;
-                    targetY = (int)y;
-                }
                 break;
             case MotionEvent.ACTION_MOVE:
                 gesturePath.lineTo(x, y); // Draw a line to the new touch point
                 break;
             case MotionEvent.ACTION_UP:
-//                if (circleActive){
-//                    float distance = (float) Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
-//                    if (distance <= 75) {
-//                        circleActive = false;
-//                        nextGesture();
-//                    }
-//                }
                 drawArea.drawPath(gesturePath, erasePaint);
                 gesturePath.reset();
                 break;
@@ -211,11 +199,17 @@ public class PathEvent {
         image_view.setImageBitmap(bitmap);
     }
 
-    interface PathShape{
+    public interface PathShape{
         void draw();
         String repr();
     }
 
+    private static class FreeForm implements PathShape{
+        private FreeForm(){}
+        public void draw(){}
+        public String repr(){return "FREEFORM";}
+
+    }
     private class HorizontalLine implements PathShape{
         int y;
         int startX;
@@ -234,10 +228,8 @@ public class PathEvent {
         }
 
         public void draw(){
-            targetX = endX;
-            targetY = y;
             background.drawLine(startX, y, endX, y, gestureShapePaint); // Draw a line
-            drawArrowhead(background, endX, y, 30, y, y, startX, endX);
+//            drawArrowhead(background, endX, y, 30, y, y, startX, endX);
             image_view.setImageBitmap(bitmap);
         }
 
@@ -269,10 +261,8 @@ public class PathEvent {
         }
 
         public void draw(){
-            targetX = x;
-            targetY = endY;
             background.drawLine(x, startY, x, endY, gestureShapePaint); // Draw a line
-            drawArrowhead(background, x, endY, 30, startY, endY, x, x);
+//            drawArrowhead(background, x, endY, 30, startY, endY, x, x);
             image_view.setImageBitmap(bitmap);
         }
 
@@ -308,10 +298,8 @@ public class PathEvent {
         }
 
         public void draw(){
-            targetX = endX;
-            targetY = endY;
             background.drawLine(startX, startY, endX, endY, gestureShapePaint); // Draw a line
-            drawArrowhead(background, endX, endY, 30, startY, endY, startX, endX);
+//            drawArrowhead(background, endX, endY, 30, startY, endY, startX, endX);
             image_view.setImageBitmap(bitmap);
         }
 
@@ -349,10 +337,8 @@ public class PathEvent {
         }
 
         public void draw(){
-            targetX = endX;
-            targetY = endY;
             background.drawLine(startX, startY, endX, endY, gestureShapePaint); // Draw a line
-            drawArrowhead(background, endX, endY, 30, startY, endY, startX, endX);
+//            drawArrowhead(background, endX, endY, 30, startY, endY, startX, endX);
             image_view.setImageBitmap(bitmap);
         }
 
@@ -379,7 +365,6 @@ public class PathEvent {
         }
 
         public void draw(){
-            circleActive = true;
             gestureShapePaint.setStyle(Paint.Style.STROKE);
             background.drawCircle(x, y, radius, gestureShapePaint);
             gestureShapePaint.setStyle(Paint.Style.FILL);
@@ -423,7 +408,7 @@ public class PathEvent {
         }
     }
     private void drawArrowhead(Canvas canvas, float x, float y, float arrowLength, int startY, int endY, int startX, int endX) {
-        // Calculate the angle of the line
+
         float angle = (float) Math.atan2(endY - startY, endX - startX);
 
         // Calculate the arrowhead points
@@ -438,7 +423,7 @@ public class PathEvent {
         arrowPath.moveTo(x, y);  // Tip of the arrow
         arrowPath.lineTo(arrowPointX1, arrowPointY1);  // Left point of the arrow
         arrowPath.lineTo(arrowPointX2, arrowPointY2);  // Right point of the arrow
-        arrowPath.close();  // Close the path to form the triangle
+        arrowPath.close();
 
         canvas.drawPath(arrowPath, arrowPaint);
     }

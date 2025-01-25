@@ -220,18 +220,18 @@ public class CommunicationHandler {
 
   /** Touch Messages */
   public void sendGesturePathActivity(String repr){
-    String msg = "PATH_ACTIVE," + repr;
+//    String msg = "\," + repr;
 
     if (transceiver != null){
-      transceiver.sendData(msg);
+      transceiver.sendData(repr);
     }
   }
 
   public void sendGestureActivity(String repr){
-    String msg = "GESTURE_ACTIVE," + repr;
+//    String msg = "GESTURE_ACTIVE," + repr;
 
     if (transceiver != null){
-      transceiver.sendData(msg);
+      transceiver.sendData(repr);
     }
   }
   public void sendTouchDown(Touch touch) {
@@ -348,6 +348,12 @@ public class CommunicationHandler {
     }
   }
 
+  public void sendScroll(float distanceX, float distanceY){
+    String msg = "SCROLL," + distanceX + "," + distanceY;
+    if (transceiver != null) {
+      transceiver.sendData(msg);
+    }
+  }
   public void sendPinch(ScaleGestureDetector detector) {
     String msg = "PINCH_MOVE," + detector.getCurrentSpan();
     if (transceiver != null) {

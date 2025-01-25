@@ -23,8 +23,8 @@
 
   <android.opengl.GLSurfaceView
       android:id="@+id/surfaceview"
-      android:layout_width="fill_parent"
-      android:layout_height="fill_parent"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
       android:layout_gravity="top" />
 
   <LinearLayout
@@ -37,7 +37,7 @@
       android:orientation="horizontal">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="224dp"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
@@ -59,7 +59,7 @@
 
       <LinearLayout
           android:id="@+id/connection_layout"
-          android:layout_width="wrap_content"
+          android:layout_width="match_parent"
           android:layout_height="20dp"
           android:orientation="horizontal">
 
@@ -74,7 +74,7 @@
 
         <TextView
             android:id="@+id/status_text"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="connected" />
@@ -95,7 +95,7 @@
 
       <LinearLayout
           android:id="@+id/deviceip_layout"
-          android:layout_width="wrap_content"
+          android:layout_width="match_parent"
           android:layout_height="20dp"
           android:orientation="horizontal">
 
@@ -183,8 +183,8 @@
 
       <LinearLayout
           android:id="@+id/position_layout"
-          android:layout_width="wrap_content"
-          android:layout_height="20dp"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
           android:orientation="horizontal">
 
         <TextView
@@ -199,7 +199,7 @@
 
         <TextView
             android:id="@+id/position_text"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="(0.00, 0.00, 0.00)"
@@ -208,7 +208,7 @@
 
       <LinearLayout
           android:id="@+id/orientation_layout"
-          android:layout_width="wrap_content"
+          android:layout_width="match_parent"
           android:layout_height="20dp"
           android:orientation="horizontal">
 
@@ -253,26 +253,26 @@
 
     </LinearLayout>
 
-  <FrameLayout
-      android:layout_width="match_parent"
-      android:layout_height="match_parent">
-
-    <ImageView
-        android:id="@+id/touchview"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/draw_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+      <ImageView
+          android:id="@+id/draw_view"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent" />
 
-<!--    <ImageView-->
-<!--        android:id="@+id/image_view"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent" />-->
+      <ImageView
+          android:id="@+id/touchview"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent" />
 
-  </FrameLayout>
+      <!--    <ImageView-->
+      <!--        android:id="@+id/image_view"-->
+      <!--        android:layout_width="match_parent"-->
+      <!--        android:layout_height="match_parent" />-->
+
+    </FrameLayout>
 
   </LinearLayout>
 

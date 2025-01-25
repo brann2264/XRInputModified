@@ -39,6 +39,7 @@ public class GestureEvent {
     private int numSwipeDown;
     private int numSwipeLeft;
     private int numSwipeRight;
+    private boolean terminate = false;
 
     public GestureEvent(ImageView display, ImageView drawView) {
         imageView = display;
@@ -55,8 +56,9 @@ public class GestureEvent {
 
         gesturePaint = new Paint();
         gesturePaint.setStyle(Paint.Style.FILL);
-        gesturePaint.setColor(Color.BLUE);
+        gesturePaint.setColor(Color.GREEN);
         gesturePaint.setStrokeWidth(7);
+        gesturePaint.setStrokeCap(Paint.Cap.ROUND);
 
         locationOnScreen = new int[2];
         imageView.getLocationOnScreen(locationOnScreen);
@@ -64,6 +66,7 @@ public class GestureEvent {
 
     public void start() {
         gestureStack.clear();
+        terminate = false;
 
         for (int i = 0; i < numSwipeDown; i++){
             gestureStack.add(new SwipeDown());
@@ -92,6 +95,10 @@ public class GestureEvent {
         nextGesture();
     }
 
+    public void terminate(){
+        terminate = true;
+    }
+
     public void setCounts(int[] counts){
         numTaps = counts[0];
         numDoubleTaps = counts[1];
@@ -105,12 +112,17 @@ public class GestureEvent {
 
     private void nextGesture(){
         imageViewCanvas.drawColor(Color.BLACK);
+        updateLocations();
+
+        if (terminate){
+            return;
+        }
         if (!gestureStack.isEmpty()){
             Gesture curr =  gestureStack.remove(gestureStack.size()-1);
             active = curr;
             curr.draw();
             new Handler().postDelayed(this::clearCanvas, 5000);
-            new Handler().postDelayed(this::nextGesture, 2000);
+            new Handler().postDelayed(this::nextGesture, 8000);
         }
     }
 
@@ -118,6 +130,11 @@ public class GestureEvent {
         imageViewCanvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);
         imageView.invalidate();
         active = null;
+    }
+
+    private void updateLocations(){
+        locationOnScreen = new int[2];
+        imageView.getLocationOnScreen(locationOnScreen);
     }
 
     public interface Gesture {
@@ -147,8 +164,8 @@ public class GestureEvent {
     }
 
     class DoubleTap implements Gesture {
-        private int x;
-        private int y;
+        private final int x;
+        private final int y;
 
         private DoubleTap(){
             x = random.nextInt(width-60) + 30;

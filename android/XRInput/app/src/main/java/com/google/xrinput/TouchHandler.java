@@ -81,7 +81,7 @@ public class TouchHandler
       communicationHandler.sendGesturePathActivity(pathEvent.active.repr());
     }
     if (gestureEvent.active != null){
-      communicationHandler.sendGesturePathActivity(gestureEvent.active.repr());
+      communicationHandler.sendGestureActivity(gestureEvent.active.repr());
     }
 
     switch (event.getActionMasked()) {
@@ -144,6 +144,8 @@ public class TouchHandler
 
           // POST TOUCH EVENT
           communicationHandler.sendTouchUp(touch);
+
+          Log.d(TAG, "TOUCH_UP_DETECTED");
         }
         numberOfTouches--;
         break;
@@ -161,7 +163,7 @@ public class TouchHandler
 
   @Override
   public boolean onFling(MotionEvent event1, MotionEvent event2, float velocityX, float velocityY) {
-    if (Math.abs(velocityX) > 2000f || Math.abs(velocityY) > 2000f) {
+    if (Math.abs(velocityX) > 800f || Math.abs(velocityY) > 800f) {
       Log.d(TAG, "Vel: (" + velocityX + ", " + velocityY + ")");
 
       // Post message
@@ -184,10 +186,11 @@ public class TouchHandler
   }
 
   @Override
-  public boolean onScroll(
-      MotionEvent event1, MotionEvent event2, float distanceX, float distanceY) {
-//     Log.d(TAG, "onScroll: " + event1.toString() + event2.toString());
-    return true;
+  public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX, float distanceY) {
+     Log.d(TAG, "onScroll: " + event1.toString() + event2.toString());
+
+//     communicationHandler.sendScroll(distanceX, distanceY);
+     return true;
   }
 
   @Override
@@ -197,7 +200,7 @@ public class TouchHandler
 
   @Override
   public boolean onSingleTapUp(MotionEvent event) {
-//    Log.d(TAG, "onSingleTapUp: " + event.toString());
+    Log.d(TAG, "onSingleTapUp: " + event.toString());
     // Use this and onDoubleTap for multi-tap counter
 
     // restart tap timer
@@ -253,13 +256,13 @@ public class TouchHandler
 
   @Override
   public boolean onDoubleTapEvent(MotionEvent event) {
-    // Log.d(TAG, "onDoubleTapEvent: " + event.toString());
+//     Log.d(TAG, "onDoubleTapEvent: " + event.toString());
     return true;
   }
 
   @Override
   public boolean onSingleTapConfirmed(MotionEvent event) {
-    // Log.d(TAG, "onSingleTapConfirmed: " + event.toString());
+     Log.d(TAG, "onSingleTapConfirmed: " + event.toString());
 
     // Post message
     int index = event.getActionIndex();
@@ -270,8 +273,8 @@ public class TouchHandler
 
   @Override
   public boolean onScale(ScaleGestureDetector detector) {
-    // Log.d(TAG, "Scaling: " + detector.getCurrentSpan());
-    // Log.d(TAG, "Delta: " + (detector.getCurrentSpan() - detector.getPreviousSpan()));
+     Log.d(TAG, "Scaling: " + detector.getCurrentSpan());
+     Log.d(TAG, "Delta: " + (detector.getCurrentSpan() - detector.getPreviousSpan()));
     communicationHandler.sendPinch(detector);
     return true;
   }
@@ -279,7 +282,7 @@ public class TouchHandler
   @Override
   public boolean onScaleBegin(ScaleGestureDetector detector) {
     // Use this to detect scale/zoom gesures
-    // Log.d(TAG, "Pinch Started");
+//     Log.d(TAG, "Pinch Started");
     // Post message
     communicationHandler.sendPinchStart(detector);
     return true;

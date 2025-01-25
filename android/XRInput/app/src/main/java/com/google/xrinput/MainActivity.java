@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private TouchHandler touchHandler;
   private CommunicationHandler communicationHandler;
   private boolean sendingDataFlag = false;
-  private int tapsToStopConnection = 8;
+  private int tapsToStopConnection = 25;
   private int tapsRemainingToStopConnection = tapsToStopConnection;
   private ImageView inputArea;
 
@@ -162,19 +162,26 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
                   communicationHandler.sendPose(pose);
                 }
               }
+              if (pathEvent.active != null){
+                communicationHandler.sendGesturePathActivity(pathEvent.active.repr());
+              }
+              if (gestureEvent.active != null){
+                communicationHandler.sendGestureActivity(gestureEvent.active.repr());
+              }
 
               // Sensors
-              communicationHandler.sendAccelerometer(sensorHandler);
-              communicationHandler.sendGravity(sensorHandler);
-              communicationHandler.sendGyroscope(sensorHandler);
-              communicationHandler.sendLinearAcceleration(sensorHandler);
-              communicationHandler.sendRotationVector(sensorHandler);
-              communicationHandler.sendGameRotationVector(sensorHandler);
-              communicationHandler.sendMagneticField(sensorHandler);
-              communicationHandler.sendProximity(sensorHandler);
-              communicationHandler.sendAmbientTemperature(sensorHandler);
-              communicationHandler.sendLight(sensorHandler);
-              communicationHandler.sendDeviceOrientation(sensorHandler);
+
+//              communicationHandler.sendAccelerometer(sensorHandler);
+//              communicationHandler.sendGravity(sensorHandler);
+//              communicationHandler.sendGyroscope(sensorHandler);
+//              communicationHandler.sendLinearAcceleration(sensorHandler);
+//              communicationHandler.sendRotationVector(sensorHandler);
+//              communicationHandler.sendGameRotationVector(sensorHandler);
+//              communicationHandler.sendMagneticField(sensorHandler);
+//              communicationHandler.sendProximity(sensorHandler);
+//              communicationHandler.sendAmbientTemperature(sensorHandler);
+//              communicationHandler.sendLight(sensorHandler);
+//              communicationHandler.sendDeviceOrientation(sensorHandler);
 
               // Check if we should stop communication
               if (tapsRemainingToStopConnection == 0) {
@@ -285,10 +292,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     layout.setOrientation(LinearLayout.VERTICAL);
 
     // Create 6 input fields
-    final EditText[] inputFields = new EditText[6];
-    final String[] labels = {"Horizontal Line", "Vertical Line", "Slash", "BackSlash", "Circle", "Static"};
+    final EditText[] inputFields = new EditText[1];
+    final String[] labels = {"Enter Count:"};
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 1; i++) {
       TextView label = new TextView(this);
       label.setText(labels[i]);
       layout.addView(label);
@@ -307,10 +314,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int which) {
-                int[] numbers = new int[6];
+                int[] numbers = new int[1];
                 boolean allValid = true;
 
-                for (int i = 0; i < 6; i++) {
+                for (int i = 0; i < 1; i++) {
                   String input = inputFields[i].getText().toString();
                   if (!input.isEmpty()) {
                     try {
@@ -343,11 +350,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     layout.setOrientation(LinearLayout.VERTICAL);
 
     // Create 6 input fields
-    final EditText[] inputFields = new EditText[8];
-    final String[] labels = {"Taps", "Double Taps", "Pinch In", "Pinch Out", "Swipe Up", "Swipe Down",
-                            "Swipe Left", "Swipe Right"};
+    final EditText[] inputFields = new EditText[1];
+    final String[] labels = {"Enter Counts"};
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 1; i++) {
       TextView label = new TextView(this);
       label.setText(labels[i]);
       layout.addView(label);
@@ -366,10 +372,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int which) {
-                int[] numbers = new int[8];
+                int[] numbers = new int[1];
                 boolean allValid = true;
 
-                for (int i = 0; i < 8; i++) {
+                for (int i = 0; i < 1; i++) {
                   String input = inputFields[i].getText().toString();
                   if (!input.isEmpty()) {
                     try {
@@ -397,13 +403,17 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   }
 
   private void processPathNumbers(int[] numbers) {
+    int[] counts = new int[6];
+    Arrays.fill(counts, numbers[0]);
     pathEvent.enableGesturePath();
-    pathEvent.setCounts(numbers);
+    pathEvent.setCounts(counts);
     pathEvent.start();
   }
 
   private void processGestureNumbers(int[] numbers) {
-    gestureEvent.setCounts(numbers);
+    int[] counts = new int[8];
+    Arrays.fill(counts, numbers[0]);
+    gestureEvent.setCounts(counts);
     gestureEvent.start();
     pathEvent.disableGesturePath();
   }
@@ -435,6 +445,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             new View.OnClickListener() {
               @Override
               public void onClick(View v) {
+                  gestureEvent.terminate();
                   promptUserPath();
               }
             });
@@ -444,6 +455,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             new View.OnClickListener() {
               @Override
               public void onClick(View v) {
+                pathEvent.terminate();
                 promptUserGesture();
               }
             });
