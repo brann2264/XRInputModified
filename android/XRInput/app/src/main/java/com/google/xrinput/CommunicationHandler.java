@@ -219,8 +219,16 @@ public class CommunicationHandler {
   }
 
   /** Touch Messages */
-  public void sendGesturePathActivity(){
-    String msg = ;
+  public void sendGesturePathActivity(String repr){
+    String msg = "PATH_ACTIVE," + repr;
+
+    if (transceiver != null){
+      transceiver.sendData(msg);
+    }
+  }
+
+  public void sendGestureActivity(String repr){
+    String msg = "GESTURE_ACTIVE," + repr;
 
     if (transceiver != null){
       transceiver.sendData(msg);

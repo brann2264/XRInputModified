@@ -36,7 +36,7 @@ public class TouchHandler
         ScaleGestureDetector.OnScaleGestureListener {
   private final String TAG = TouchHandler.class.getSimpleName();
   private CommunicationHandler communicationHandler;
-  private GestureEvent gestureEvent;
+  private PathEvent pathEvent;
 
   private HashMap<Integer, Touch> touches = new HashMap<>();
   private GestureDetector gestureDetector;
@@ -50,6 +50,7 @@ public class TouchHandler
   private TimerTask resetTapCountTask;
   private boolean timerRunning = false;
   private long tapDetectThreshold_ms = 500;
+  private GestureEvent gestureEvent;
 
   // Constructor
   public TouchHandler(Context context, CommunicationHandler comm) {
@@ -62,9 +63,11 @@ public class TouchHandler
     initNewTapCountTimerTask();
   }
 
-  public void setGestureEvent(GestureEvent gestureEvent){
+  public void setEvents(PathEvent pathEvent, GestureEvent gestureEvent){
+    this.pathEvent = pathEvent;
     this.gestureEvent = gestureEvent;
   }
+
 
   @Override
   public boolean onTouch(View v, MotionEvent event) {
@@ -72,7 +75,14 @@ public class TouchHandler
     int pointerId = event.getPointerId(index);
     currentView = v;
 
-    gestureEvent.processTouchEvent(event);
+    pathEvent.processTouchEvent(event);
+
+    if (pathEvent.active != null){
+      communicationHandler.sendGesturePathActivity(pathEvent.active.repr());
+    }
+    if (gestureEvent.active != null){
+      communicationHandler.sendGesturePathActivity(gestureEvent.active.repr());
+    }
 
     switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN:
@@ -176,7 +186,7 @@ public class TouchHandler
   @Override
   public boolean onScroll(
       MotionEvent event1, MotionEvent event2, float distanceX, float distanceY) {
-    // Log.d(TAG, "onScroll: " + event1.toString() + event2.toString());
+//     Log.d(TAG, "onScroll: " + event1.toString() + event2.toString());
     return true;
   }
 
@@ -187,7 +197,7 @@ public class TouchHandler
 
   @Override
   public boolean onSingleTapUp(MotionEvent event) {
-    Log.d(TAG, "onSingleTapUp: " + event.toString());
+//    Log.d(TAG, "onSingleTapUp: " + event.toString());
     // Use this and onDoubleTap for multi-tap counter
 
     // restart tap timer

@@ -102,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private Button connectButton;
   private Button editHMDaddressButton;
   private Button activityButton;
+  private Button gestureActivityButton;
   private Switch toggleARCoreSwitch;
   private String hmdIPstring = "192.168.0.1";
   private GradientDrawable connectionIndicator;
@@ -119,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private int tapsRemainingToStopConnection = tapsToStopConnection;
   private ImageView inputArea;
 
+  private PathEvent pathEvent;
   private GestureEvent gestureEvent;
 
   @Override
@@ -277,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
       });
     }
   }
-  public void promptUser() {
+  public void promptUserPath() {
     // Create a vertical layout for multiple input fields
     LinearLayout layout = new LinearLayout(this);
     layout.setOrientation(LinearLayout.VERTICAL);
@@ -300,7 +302,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
     // Build the dialog
     new AlertDialog.Builder(this)
-            .setTitle("Customize Gesture Counts")
+            .setTitle("Customize Path Counts")
             .setView(layout) // Set the custom layout
             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
               @Override
@@ -327,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
                 if (allValid) {
                   Toast.makeText(MainActivity.this, "All inputs collected: " + Arrays.toString(numbers), Toast.LENGTH_LONG).show();
-                  processNumbers(numbers); // Process the collected numbers
+                  processPathNumbers(numbers); // Process the collected numbers
                 }
               }
             })
@@ -335,9 +337,75 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             .show();
   }
 
-  private void processNumbers(int[] numbers) {
+  public void promptUserGesture() {
+    // Create a vertical layout for multiple input fields
+    LinearLayout layout = new LinearLayout(this);
+    layout.setOrientation(LinearLayout.VERTICAL);
+
+    // Create 6 input fields
+    final EditText[] inputFields = new EditText[8];
+    final String[] labels = {"Taps", "Double Taps", "Pinch In", "Pinch Out", "Swipe Up", "Swipe Down",
+                            "Swipe Left", "Swipe Right"};
+
+    for (int i = 0; i < 8; i++) {
+      TextView label = new TextView(this);
+      label.setText(labels[i]);
+      layout.addView(label);
+
+      EditText inputField = new EditText(this);
+      inputField.setInputType(InputType.TYPE_CLASS_NUMBER);
+      layout.addView(inputField);
+
+      inputFields[i] = inputField; // Store reference to each input field
+    }
+
+    // Build the dialog
+    new AlertDialog.Builder(this)
+            .setTitle("Customize Gesture Counts")
+            .setView(layout) // Set the custom layout
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                int[] numbers = new int[8];
+                boolean allValid = true;
+
+                for (int i = 0; i < 8; i++) {
+                  String input = inputFields[i].getText().toString();
+                  if (!input.isEmpty()) {
+                    try {
+                      numbers[i] = Integer.parseInt(input); // Parse each input
+                    } catch (NumberFormatException e) {
+                      Toast.makeText(MainActivity.this, "Invalid number for " + labels[i], Toast.LENGTH_SHORT).show();
+                      allValid = false;
+                      break;
+                    }
+                  } else {
+                    Toast.makeText(MainActivity.this, "Input for " + labels[i] + " is empty", Toast.LENGTH_SHORT).show();
+                    allValid = false;
+                    break;
+                  }
+                }
+
+                if (allValid) {
+                  Toast.makeText(MainActivity.this, "All inputs collected: " + Arrays.toString(numbers), Toast.LENGTH_LONG).show();
+                  processGestureNumbers(numbers); // Process the collected numbers
+                }
+              }
+            })
+            .setNegativeButton("Cancel", null) // Allow canceling
+            .show();
+  }
+
+  private void processPathNumbers(int[] numbers) {
+    pathEvent.enableGesturePath();
+    pathEvent.setCounts(numbers);
+    pathEvent.start();
+  }
+
+  private void processGestureNumbers(int[] numbers) {
     gestureEvent.setCounts(numbers);
     gestureEvent.start();
+    pathEvent.disableGesturePath();
   }
 
   private void initUI() {
@@ -354,8 +422,9 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
       @Override
       public void run() {
         // Now the ImageView is fully laid out, and its dimensions are set
+        pathEvent = new PathEvent(touchView, drawView);
         gestureEvent = new GestureEvent(touchView, drawView);
-        touchHandler.setGestureEvent(gestureEvent);
+        touchHandler.setEvents(pathEvent, gestureEvent);
       }
     });
 
@@ -366,7 +435,16 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             new View.OnClickListener() {
               @Override
               public void onClick(View v) {
-                  promptUser();
+                  promptUserPath();
+              }
+            });
+
+    gestureActivityButton = findViewById(R.id.gesture_activity_button);
+    gestureActivityButton.setOnClickListener(
+            new View.OnClickListener() {
+              @Override
+              public void onClick(View v) {
+                promptUserGesture();
               }
             });
 
@@ -380,16 +458,14 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
               communicationHandler.openConnection(hmdIPstring);
               Log.d(TAG, "Started sending data");
 
-              // disable button
+//               disable button
               connectButton.setClickable(false);
               connectButton.setEnabled(false);
               editHMDaddressButton.setClickable(false);
               editHMDaddressButton.setEnabled(false);
               toggleARCoreSwitch.setClickable(false);
               toggleARCoreSwitch.setEnabled(false);
-
-              activityButton.setClickable(true);
-              activityButton.setTextColor(Color.WHITE);
+//
             }
           }
         });

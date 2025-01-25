@@ -233,16 +233,22 @@
 
       <Button
           android:id="@+id/connect_button"
-          android:layout_width="wrap_content"
+          android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:layout_marginTop="15dp"
           android:text="@string/connect_text" />
 
       <Button
           android:id="@+id/activity_button"
-          android:layout_width="wrap_content"
+          android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:text="Start Activity" />
+          android:text="Start Path Activity" />
+
+      <Button
+          android:id="@+id/gesture_activity_button"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:text="Start Gesture Activity" />
 
 
     </LinearLayout>

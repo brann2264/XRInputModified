@@ -1,343 +1,327 @@
 package com.google.xrinput;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.RectF;
-import android.media.Image;
-import android.view.MotionEvent;
-import android.widget.ImageView;
-import android.graphics.Canvas;
+
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.os.Handler;
+import android.widget.ImageView;
 import android.graphics.Color;
 
 import java.util.ArrayList;
-import java.util.Random;
-import android.graphics.Paint;
-import android.graphics.Path;
 import java.util.List;
-
+import java.util.Random;
 
 public class GestureEvent {
-    private Canvas background;
-    private Bitmap bitmap;
-    private ImageView image_view;
-    final private int width;
-    final private int height;
-    final private Random random;
-    private boolean circleActive = false;
 
-    private Path gesturePath;
-    private Paint gesturePathPaint;
-    private Paint erasePaint;
-    private Paint gestureShapePaint;
+    private ImageView imageView;
+    private ImageView drawView;
+    private int height;
+    private int width;
+    private Random random;
 
-    private int targetX = -1;
-    private int targetY = -1;
-    private List<GestureShape> gestureStack;
+    private Bitmap imageViewBitmap;
+    private Bitmap drawViewBitmap;
+    private Canvas imageViewCanvas;
+    private Canvas drawViewCanvas;
+    private int[] locationOnScreen;
+    private Paint gesturePaint;
+    private Paint drawPaint;
+    public Gesture active;
 
-    private int numHorizontalLines;
-    private int numVerticalLines;
-    private int numBackSlashes;
-    private int numSlashes;
-    private int numCircles;
-    private int numStatics;
-    private final int BORDER = 0;
-    private final int MIN_LENGTH = 50;
+    private List<Gesture> gestureStack;
 
-    public boolean complete = false;
-    private ImageView draw_view;
-    private Bitmap drawBitmap;
-    private Canvas drawArea;
+    private int numTaps;
+    private int numDoubleTaps;
+    private int numPinchIn;
+    private int numPinchOut;
+    private int numSwipeUp;
+    private int numSwipeDown;
+    private int numSwipeLeft;
+    private int numSwipeRight;
 
-    public GestureEvent(ImageView display, ImageView drawView){
-//        set some variables
-        image_view = display;
-        draw_view = drawView;
-        width = image_view.getWidth();
-        height = image_view.getHeight();
-        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        drawBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        background = new Canvas(bitmap);
-        drawArea = new Canvas(drawBitmap);
+    public GestureEvent(ImageView display, ImageView drawView) {
+        imageView = display;
+        this.drawView = drawView;
+        height = display.getHeight();
+        width = display.getWidth();
         random = new Random();
-        gesturePath = new Path();
-        gesturePathPaint = new Paint();
-        gesturePathPaint.setColor(0x80FFFFFF);
-        gesturePathPaint.setAntiAlias(true);
-        gesturePathPaint.setStrokeWidth(50);
-        gesturePathPaint.setStyle(Paint.Style.STROKE);
-        gesturePathPaint.setStrokeJoin(Paint.Join.ROUND);
-        gesturePathPaint.setStrokeCap(Paint.Cap.ROUND);
-        erasePaint = new Paint();
-        erasePaint.setColor(Color.TRANSPARENT);
-        erasePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-        erasePaint.setAntiAlias(true);
-        erasePaint.setStrokeWidth(52);
-        erasePaint.setStyle(Paint.Style.STROKE);
-        erasePaint.setStrokeJoin(Paint.Join.ROUND);
-        erasePaint.setStrokeCap(Paint.Cap.ROUND);
-        gestureShapePaint = new Paint();
-        gestureShapePaint.setColor(Color.BLUE); // Set paint color
-        gestureShapePaint.setStrokeWidth(5);    // Set paint stroke width
+        imageViewBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        drawViewBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        imageViewCanvas = new Canvas(imageViewBitmap);
+        drawViewCanvas = new Canvas(drawViewBitmap);
+
         gestureStack = new ArrayList<>();
+
+        gesturePaint = new Paint();
+        gesturePaint.setStyle(Paint.Style.FILL);
+        gesturePaint.setColor(Color.BLUE);
+        gesturePaint.setStrokeWidth(7);
+
+        locationOnScreen = new int[2];
+        imageView.getLocationOnScreen(locationOnScreen);
     }
 
-    public void start(){
+    public void start() {
         gestureStack.clear();
 
-        for (int i = 0; i < numHorizontalLines; i++){
-            gestureStack.add(new HorizontalLine());
+        for (int i = 0; i < numSwipeDown; i++){
+            gestureStack.add(new SwipeDown());
         }
-        for (int i = 0; i < numVerticalLines; i++){
-            gestureStack.add(new VerticalLine());
+        for (int i = 0; i < numSwipeUp; i++){
+            gestureStack.add(new SwipeUp());
         }
-        for (int i = 0; i < numSlashes; i++){
-            gestureStack.add(new Slash());
+        for (int i = 0; i < numSwipeLeft; i++){
+            gestureStack.add(new SwipeLeft());
         }
-        for (int i = 0; i < numBackSlashes; i++){
-            gestureStack.add(new BackSlash());
+        for (int i = 0; i < numSwipeRight; i++){
+            gestureStack.add(new SwipeRight());
         }
-        for (int i = 0; i < numStatics; i++){
-            gestureStack.add(new Static());
+        for (int i = 0; i < numPinchOut; i++){
+            gestureStack.add(new PinchOut());
         }
-        for (int i = 0; i < numCircles; i++){
-            gestureStack.add(new Circle());
+        for (int i = 0; i < numPinchIn; i++){
+            gestureStack.add(new PinchIn());
+        }
+        for (int i = 0; i < numDoubleTaps; i++){
+            gestureStack.add(new DoubleTap());
+        }
+        for (int i = 0; i < numTaps; i++){
+            gestureStack.add(new Tap());
         }
         nextGesture();
     }
 
     public void setCounts(int[] counts){
-        numHorizontalLines = counts[0];
-        numVerticalLines = counts[1];
-        numSlashes = counts[2];
-        numBackSlashes = counts[3];
-        numCircles = counts[4];
-        numStatics = counts[5];
+        numTaps = counts[0];
+        numDoubleTaps = counts[1];
+        numPinchIn = counts[2];
+        numPinchOut = counts[3];
+        numSwipeUp = counts[4];
+        numSwipeDown = counts[5];
+        numSwipeLeft = counts[6];
+        numSwipeRight = counts[7];
     }
 
     private void nextGesture(){
-        background.drawColor(Color.BLACK);
+        imageViewCanvas.drawColor(Color.BLACK);
         if (!gestureStack.isEmpty()){
-            gestureStack.remove(gestureStack.size()-1).draw();
-        } else {
-            complete = true;
+            Gesture curr =  gestureStack.remove(gestureStack.size()-1);
+            active = curr;
+            curr.draw();
+            new Handler().postDelayed(this::clearCanvas, 5000);
+            new Handler().postDelayed(this::nextGesture, 2000);
         }
     }
 
-    public void processTouchEvent(MotionEvent event){
-        float x = event.getX();
-        float y = event.getY();
-
-//// Get the position of image_view on the screen (top-left corner of the image view)
-//        int[] location = new int[2];
-//        image_view.getLocationOnScreen(location);
-//
-//// Scale factor handling (if image_view is scaled, adjust coordinates)
-//        float scaleX = image_view.getWidth() / (float) image_view.getMeasuredWidth();
-//        float scaleY = image_view.getHeight() / (float) image_view.getMeasuredHeight();
-//
-//// Adjust touch coordinates for scaling
-//        float x = (touchX - location[0]) / scaleX;
-//        float y = (touchY - location[1]) / scaleY;
-
-        if (!circleActive) {
-            if (targetX != -1 && targetY != -1) {
-
-                float distance = (float) Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
-                if (distance <= 50) {
-                    nextGesture();
-                }
-            }
-        }
-
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                gesturePath.moveTo(x, y); // Start a new path at the touch point
-
-                if (circleActive){
-                    targetX = (int)x;
-                    targetY = (int)y;
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                gesturePath.lineTo(x, y); // Draw a line to the new touch point
-                break;
-            case MotionEvent.ACTION_UP:
-                if (circleActive){
-                    float distance = (float) Math.sqrt(Math.pow(x - targetX, 2) + Math.pow(y - targetY, 2));
-                    if (distance <= 75) {
-                        circleActive = false;
-                        nextGesture();
-                    }
-                }
-                drawArea.drawPath(gesturePath, erasePaint);
-                gesturePath.reset();
-                break;
-        }
-
-        drawArea.drawPath(gesturePath, gesturePathPaint);
-        draw_view.setImageBitmap(drawBitmap);
-        image_view.setImageBitmap(bitmap);
+    private void clearCanvas(){
+        imageViewCanvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);
+        imageView.invalidate();
+        active = null;
     }
 
-    interface GestureShape{
+    public interface Gesture {
         void draw();
+        String repr();
     }
 
-    private class HorizontalLine implements GestureShape{
-        int y;
-        int startX;
-        int endX;
-
-        private HorizontalLine(){
-            y = random.nextInt(height-2*BORDER) + BORDER;
-            startX = random.nextInt(width-MIN_LENGTH-2*BORDER)+BORDER;
-            endX = startX + random.nextInt(Math.max(0, width - startX-MIN_LENGTH-2*BORDER)) + MIN_LENGTH + BORDER;
-
-            if (random.nextInt(2) == 0){
-                int temp = startX;
-                startX = endX;
-                endX = temp;
-            }
+    class Tap implements Gesture {
+        private final int x;
+        private final int y;
+        private Tap(){
+            x = random.nextInt(width-40) + 20;
+            y = random.nextInt(height-40) + 20;
         }
 
         public void draw(){
-            targetX = endX;
-            targetY = y;
-            background.drawLine(startX, y, endX, y, gestureShapePaint); // Draw a line
-            drawArrowhead(background, endX, y, 25, y, y, startX, endX);
-            image_view.setImageBitmap(bitmap);
+            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            imageView.setImageBitmap(imageViewBitmap);
         }
 
+        public String repr(){
+            return "TAP,"
+                    + (this.x + locationOnScreen[0])
+                    + ","
+                    + (this.y + locationOnScreen[1]);
+        }
     }
-    private class VerticalLine implements GestureShape{
-        int x;
-        int startY;
-        int endY;
 
-        private VerticalLine(){
-            x = random.nextInt(width-2*BORDER) + BORDER;
-            startY = random.nextInt(height-MIN_LENGTH-2*BORDER)+BORDER;
-            endY = startY + random.nextInt(Math.max(0, height - startY-MIN_LENGTH-2*BORDER)) + MIN_LENGTH + BORDER;
+    class DoubleTap implements Gesture {
+        private int x;
+        private int y;
 
-            if (random.nextInt(2) == 0){
-                int temp = startY;
-                startY = endY;
-                endY = temp;
-            }
+        private DoubleTap(){
+            x = random.nextInt(width-60) + 30;
+            y = random.nextInt(height-60) + 30;
         }
 
         public void draw(){
-            targetX = x;
-            targetY = endY;
-            background.drawLine(x, startY, x, endY, gestureShapePaint); // Draw a line
-            drawArrowhead(background, x, endY, 25, startY, endY, x, x);
-            image_view.setImageBitmap(bitmap);
+            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            gesturePaint.setStyle(Paint.Style.STROKE);
+            imageViewCanvas.drawCircle(x, y, 30, gesturePaint);
+            gesturePaint.setStyle(Paint.Style.FILL);
+
+            imageView.setImageBitmap(imageViewBitmap);
+        }
+
+        public String repr(){
+            return "DOUBLE_TAP,"
+                    + (this.x + locationOnScreen[0])
+                    + ","
+                    + (this.y + locationOnScreen[1]);
         }
 
     }
-    private class Slash implements GestureShape{
-        int startX;
-        int startY;
-        int endX;
-        int endY;
 
-        private Slash(){
-            startX = random.nextInt(width - 2 * BORDER - MIN_LENGTH) + BORDER;
-            endX = random.nextInt(width - startX - 2 * BORDER - MIN_LENGTH) + startX + MIN_LENGTH;
-            endY = random.nextInt(height - 2 * BORDER - MIN_LENGTH) + BORDER;
-            startY = random.nextInt(height - endY - 2 * BORDER - MIN_LENGTH) + endY + MIN_LENGTH;
-            if (random.nextInt(2) == 0){
-                int temp = startX;
-                startX = endX;
-                endX = temp;
-                temp = startY;
-                startY = endY;
-                endY = temp;
-            }
+    class PinchIn implements Gesture {
+        private final int x;
+        private final int y;
+        private final double angle;
+
+        private PinchIn(){
+            x = random.nextInt(width-60-150) + 30 + 75;
+            y = random.nextInt(height-60-150) + 30 + 75;
+            angle = Math.random() * (Math.PI);
         }
 
         public void draw(){
-            targetX = endX;
-            targetY = endY;
-            background.drawLine(startX, startY, endX, endY, gestureShapePaint); // Draw a line
-            drawArrowhead(background, endX, endY, 25, startY, endY, startX, endX);
-            image_view.setImageBitmap(bitmap);
+            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+
+            drawArrowhead(imageViewCanvas, (float)(x+50*Math.cos(angle)), (float)(y+50*Math.sin(angle)),
+                    30, angle+Math.PI);
+            drawArrowhead(imageViewCanvas, (float)(x-50*Math.cos(angle)), (float)(y-50*Math.sin(angle)),
+                    30, angle);
+
+            imageView.setImageBitmap(imageViewBitmap);
         }
 
+        public String repr(){
+            return "PINCH_IN,"
+                    + (this.x + locationOnScreen[0])
+                    + ","
+                    + (this.y + locationOnScreen[1])
+                    + ","
+                    + angle;
+        }
     }
-    private class BackSlash implements GestureShape{
-        int startX;
-        int startY;
-        int endX;
-        int endY;
 
-        private BackSlash(){
-            startX = random.nextInt(width - 2 * BORDER - MIN_LENGTH) + BORDER;
-            endX = random.nextInt(width - startX - 2 * BORDER - MIN_LENGTH) + startX + MIN_LENGTH;
-            startY = random.nextInt(height - 2 * BORDER - MIN_LENGTH) + BORDER;
-            endY = random.nextInt(height - startY - 2 * BORDER - MIN_LENGTH) + startY + MIN_LENGTH;
-            if (random.nextInt(2) == 0){
-                int temp = startX;
-                startX = endX;
-                endX = temp;
-                temp = startY;
-                startY = endY;
-                endY = temp;
-            }
+    class PinchOut implements Gesture {
+        private final int x;
+        private final int y;
+        private final double angle;
+
+        private PinchOut(){
+            x = random.nextInt(width-60-150) + 30 + 75;
+            y = random.nextInt(height-60-150) + 30 + 75;
+            angle = Math.random() * (Math.PI);
         }
 
         public void draw(){
-            targetX = endX;
-            targetY = endY;
-            background.drawLine(startX, startY, endX, endY, gestureShapePaint); // Draw a line
-            drawArrowhead(background, endX, endY, 25, startY, endY, startX, endX);
-            image_view.setImageBitmap(bitmap);
+            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+
+            drawArrowhead(imageViewCanvas, (float)(x+75*Math.cos(angle)), (float)(y+75*Math.sin(angle)),
+                    30, angle);
+            drawArrowhead(imageViewCanvas, (float)(x-75*Math.cos(angle)), (float)(y-75*Math.sin(angle)),
+                    30, angle+Math.PI);
+
+            imageView.setImageBitmap(imageViewBitmap);
+        }
+
+        public String repr(){
+            return "PINCH_OUT,"
+                    + (this.x + locationOnScreen[0])
+                    + ","
+                    + (this.y + locationOnScreen[1])
+                    + ","
+                    + angle;
         }
     }
-    private class Circle implements GestureShape{
-        int y;
-        int x;
-        int radius;
 
-        private Circle(){
-            radius = random.nextInt(Math.min(height, width)/2-2*BORDER);
-            y = radius + random.nextInt(height-radius-2*BORDER)+BORDER;
-            x = radius + random.nextInt(width-radius-2*BORDER)+BORDER;
+    class SwipeUp implements Gesture {
+        private final int x;
+        private final int y;
+
+        private SwipeUp(){
+            x = random.nextInt(width-40) + 20;
+            y = random.nextInt(height-40-75) + 20 + 75;
         }
-
         public void draw(){
-            circleActive = true;
-            gestureShapePaint.setStyle(Paint.Style.STROKE);
-            background.drawCircle(x, y, radius, gestureShapePaint);
-            gestureShapePaint.setStyle(Paint.Style.FILL);
-
-            if (random.nextInt(2) == 0){
-                drawArrowhead(background, x, y+radius, 25, y+radius, y+radius, x-1, x);
-            } else {
-                drawArrowhead(background, x, y+radius, 25, y+radius, y+radius, x+1, x);
-            }
-            image_view.setImageBitmap(bitmap);
+            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            imageViewCanvas.drawLine(x, y, x, y-75, gesturePaint);
+            drawArrowhead(imageViewCanvas, x, y-75, 30, 3*Math.PI/2);
+        }
+        public String repr(){
+            return "SWIPE_UP,"
+                    + (this.x + locationOnScreen[0])
+                    + ","
+                    + (this.y + locationOnScreen[1]);
         }
     }
-    private class Static implements GestureShape {
-        int x;
-        int y;
 
-        private Static(){
-            x = 20 + random.nextInt(width-20-2*BORDER)+BORDER;
-            y = 20 + random.nextInt(height-20-2*BORDER)+BORDER;
+    class SwipeDown implements Gesture {
+        private final int x;
+        private final int y;
+
+        private SwipeDown(){
+            x = random.nextInt(width-40) + 20;
+            y = random.nextInt(height-40 - 75) + 20;
         }
-
         public void draw(){
-            targetX = x;
-            targetY = y;
-            background.drawCircle(x, y, 20, gestureShapePaint);
-            image_view.setImageBitmap(bitmap);
+            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            imageViewCanvas.drawLine(x, y, x, y+75, gesturePaint);
+            drawArrowhead(imageViewCanvas, x, y+75, 30, Math.PI/2);
+        }
+        public String repr(){
+            return "SWIPE_DOWN,"
+                    + (this.x + locationOnScreen[0])
+                    + ","
+                    + (this.y + locationOnScreen[1]);
         }
     }
-    private void drawArrowhead(Canvas canvas, float x, float y, float arrowLength, int startY, int endY, int startX, int endX) {
-        // Calculate the angle of the line
-        float angle = (float) Math.atan2(endY - startY, endX - startX);
+
+    class SwipeLeft implements Gesture {
+        private final int x;
+        private final int y;
+
+        private SwipeLeft(){
+            x = random.nextInt(width-40-75) + 20 + 75;
+            y = random.nextInt(height-40) + 20;
+        }
+        public void draw(){
+            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            imageViewCanvas.drawLine(x, y, x-75, y, gesturePaint);
+            drawArrowhead(imageViewCanvas, x-75, y, 30, Math.PI);
+        }
+        public String repr(){
+            return "SWIPE_LEFT,"
+                    + (this.x + locationOnScreen[0])
+                    + ","
+                    + (this.y + locationOnScreen[1]);
+        }
+    }
+
+    class SwipeRight implements Gesture {
+        private final int x;
+        private final int y;
+
+        private SwipeRight(){
+            x = random.nextInt(width-40 - 75) + 20;
+            y = random.nextInt(height-40) + 20;
+        }
+        public void draw(){
+            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            imageViewCanvas.drawLine(x, y, x+75, y, gesturePaint);
+            drawArrowhead(imageViewCanvas, x+75, y, 30, 0);
+        }
+        public String repr(){
+            return "SWIPE_RIGHT,"
+                    + (this.x + locationOnScreen[0])
+                    + ","
+                    + (this.y + locationOnScreen[1]);
+        }
+    }
+
+    private void drawArrowhead(Canvas canvas, float x, float y, float arrowLength, double angle) {
 
         // Calculate the arrowhead points
         float arrowPointX1 = x - arrowLength * (float) Math.cos(angle - Math.PI / 6);
@@ -346,15 +330,7 @@ public class GestureEvent {
         float arrowPointX2 = x - arrowLength * (float) Math.cos(angle + Math.PI / 6);
         float arrowPointY2 = y - arrowLength * (float) Math.sin(angle + Math.PI / 6);
 
-        // Draw the arrowhead (a triangle)
-        Path arrowPath = new Path();
-        arrowPath.moveTo(x, y);  // Tip of the arrow
-        arrowPath.lineTo(arrowPointX1, arrowPointY1);  // Left point of the arrow
-        arrowPath.lineTo(arrowPointX2, arrowPointY2);  // Right point of the arrow
-        arrowPath.close();  // Close the path to form the triangle
-
-        canvas.drawPath(arrowPath, gestureShapePaint);
+        canvas.drawLine(x, y, arrowPointX1, arrowPointY1, gesturePaint);
+        canvas.drawLine(x, y, arrowPointX2, arrowPointY2, gesturePaint);
     }
-
-
 }
