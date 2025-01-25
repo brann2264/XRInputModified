@@ -292,10 +292,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     layout.setOrientation(LinearLayout.VERTICAL);
 
     // Create 6 input fields
-    final EditText[] inputFields = new EditText[1];
-    final String[] labels = {"Enter Count:"};
+    final EditText[] inputFields = new EditText[2];
+    final String[] labels = {"Enter Count:", "Freeform Duration"};
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 2; i++) {
       TextView label = new TextView(this);
       label.setText(labels[i]);
       layout.addView(label);
@@ -314,10 +314,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int which) {
-                int[] numbers = new int[1];
+                int[] numbers = new int[2];
                 boolean allValid = true;
 
-                for (int i = 0; i < 1; i++) {
+                for (int i = 0; i < 2; i++) {
                   String input = inputFields[i].getText().toString();
                   if (!input.isEmpty()) {
                     try {
@@ -403,8 +403,9 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   }
 
   private void processPathNumbers(int[] numbers) {
-    int[] counts = new int[6];
+    int[] counts = new int[7];
     Arrays.fill(counts, numbers[0]);
+    counts[6] = numbers[1];
     pathEvent.enableGesturePath();
     pathEvent.setCounts(counts);
     pathEvent.start();

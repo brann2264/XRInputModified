@@ -46,6 +46,7 @@ public class PathEvent {
     public PathShape active;
     private boolean gesturePathBool = true;
     private boolean terminate = false;
+    private int freeformDuration;
 
     public PathEvent(ImageView display, ImageView drawView){
 //        set some variables
@@ -53,7 +54,7 @@ public class PathEvent {
         draw_view = drawView;
         width = image_view.getWidth();
         height = image_view.getHeight();
-        MIN_LENGTH = Math.min(width, height)/2;
+        MIN_LENGTH = (int)(Math.min(width, height)*0.75);
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         drawBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         background = new Canvas(bitmap);
@@ -137,6 +138,7 @@ public class PathEvent {
         numBackSlashes = counts[3];
         numCircles = counts[4];
         numStatics = counts[5];
+        freeformDuration = counts[6] * 1000;
     }
 
     private void nextPath(){
@@ -152,11 +154,11 @@ public class PathEvent {
             curr.draw();
 
             if (curr instanceof FreeForm){
-                new Handler().postDelayed(this::clearCanvas, 60000);
-                new Handler().postDelayed(this::nextPath, 61000);
+                new Handler().postDelayed(this::clearCanvas, freeformDuration);
+                new Handler().postDelayed(this::nextPath, freeformDuration+1000);
             } else {
-                new Handler().postDelayed(this::clearCanvas, 5000);
-                new Handler().postDelayed(this::nextPath, 8000);
+                new Handler().postDelayed(this::clearCanvas, 8000);
+                new Handler().postDelayed(this::nextPath, 10000);
             }
         }
     }

@@ -122,7 +122,7 @@ public class GestureEvent {
             active = curr;
             curr.draw();
             new Handler().postDelayed(this::clearCanvas, 5000);
-            new Handler().postDelayed(this::nextGesture, 8000);
+            new Handler().postDelayed(this::nextGesture, 7000);
         }
     }
 
