@@ -170,6 +170,10 @@ public class TouchHandler
       int index = event1.getActionIndex();
       int pointerId = event1.getPointerId(index);
       communicationHandler.sendFling(pointerId, velocityX, velocityY);
+      gestureEvent.sendTouchSignal(event1, GestureEvent.SwipeUp.class);
+      gestureEvent.sendTouchSignal(event1, GestureEvent.SwipeDown.class);
+      gestureEvent.sendTouchSignal(event1, GestureEvent.SwipeLeft.class);
+      gestureEvent.sendTouchSignal(event1, GestureEvent.SwipeRight.class);
     }
     return true;
   }
@@ -251,6 +255,7 @@ public class TouchHandler
     int index = event.getActionIndex();
     int pointerId = event.getPointerId(index);
     communicationHandler.sendDoubleTap(pointerId, currentTapCount);
+    gestureEvent.sendTouchSignal(event, GestureEvent.DoubleTap.class);
     return false;
   }
 
@@ -267,6 +272,7 @@ public class TouchHandler
     // Post message
     int index = event.getActionIndex();
     int pointerId = event.getPointerId(index);
+    gestureEvent.sendTouchSignal(event, GestureEvent.Tap.class);
     communicationHandler.sendTapConfirmed(pointerId, currentTapCount);
     return true;
   }
@@ -293,6 +299,8 @@ public class TouchHandler
     // Log.d(TAG, "Pinch Ended");
     // Post message
     communicationHandler.sendPinchEnd(detector);
+    gestureEvent.sendTouchSignal(null, GestureEvent.PinchOut.class);
+    gestureEvent.sendTouchSignal(null, GestureEvent.PinchIn.class);
   }
 
   private void initNewTapCountTimerTask() {

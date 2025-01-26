@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.os.Handler;
+import android.view.MotionEvent;
 import android.widget.ImageView;
 import android.graphics.Color;
 import android.widget.TextView;
@@ -43,7 +44,7 @@ public class GestureEvent {
     private boolean terminate = false;
     private TextView gestureText;
     private final int circleRadius = 50;
-    private final int arrowDistance = 150;
+    private final int arrowDistance = 250;
     private final int arrowLength = 100;
 
     public GestureEvent(ImageView display, ImageView drawView, TextView gestureText) {
@@ -128,8 +129,25 @@ public class GestureEvent {
             Gesture curr =  gestureStack.remove(gestureStack.size()-1);
             active = curr;
             curr.draw();
-            new Handler().postDelayed(this::clearCanvas, 3000);
-            new Handler().postDelayed(this::nextGesture, 5000);
+//            new Handler().postDelayed(this::clearCanvas, 3000);
+//            new Handler().postDelayed(this::nextGesture, 5000);
+        }
+    }
+
+    public void sendTouchSignal(MotionEvent event, Class<?> class_){
+
+        if (class_.isInstance(active)) {
+
+            if (class_ == Tap.class || class_ == DoubleTap.class){
+                double distance = Math.sqrt(Math.pow(active.getX()-event.getX(), 2) + Math.pow(active.getX()-event.getX(), 2));
+                if (distance <= 50){
+                    clearCanvas();
+                    new Handler().postDelayed(this::nextGesture, 2000);
+                }
+            } else {
+                clearCanvas();
+                new Handler().postDelayed(this::nextGesture, 2000);
+            }
         }
     }
 
@@ -147,9 +165,11 @@ public class GestureEvent {
     public interface Gesture {
         void draw();
         String repr();
+        int getX();
+        int getY();
     }
 
-    class Tap implements Gesture {
+    public class Tap implements Gesture {
         private final int x;
         private final int y;
         private Tap(){
@@ -169,9 +189,15 @@ public class GestureEvent {
                     + ","
                     + (this.y + locationOnScreen[1]);
         }
+        public int getX(){
+            return this.x;
+        }
+        public int getY(){
+            return this.y;
+        }
     }
 
-    class DoubleTap implements Gesture {
+    public class DoubleTap implements Gesture {
         private final int x;
         private final int y;
 
@@ -196,10 +222,16 @@ public class GestureEvent {
                     + ","
                     + (this.y + locationOnScreen[1]);
         }
+        public int getX(){
+            return this.x;
+        }
+        public int getY(){
+            return this.y;
+        }
 
     }
 
-    class PinchIn implements Gesture {
+    public class PinchIn implements Gesture {
         private final int x;
         private final int y;
         private final double angle;
@@ -228,25 +260,31 @@ public class GestureEvent {
                     + ","
                     + (this.y + locationOnScreen[1]);
         }
+        public int getX(){
+            return this.x;
+        }
+        public int getY(){
+            return this.y;
+        }
     }
 
-    class PinchOut implements Gesture {
+    public class PinchOut implements Gesture {
         private final int x;
         private final int y;
         private final double angle;
 
         private PinchOut(){
-            x = random.nextInt(width-2*circleRadius-2*(arrowDistance+arrowLength)) + circleRadius + (arrowDistance+arrowLength);
-            y = random.nextInt(height-2*circleRadius-2*(arrowDistance+arrowLength)) + circleRadius + (arrowDistance+arrowLength);
+            x = random.nextInt(width-2*circleRadius-2*(arrowDistance)) + circleRadius + (arrowDistance);
+            y = random.nextInt(height-2*circleRadius-2*(arrowDistance)) + circleRadius + (arrowDistance);
             angle = Math.random() * (Math.PI/2) + Math.PI/2;
         }
 
         public void draw(){
             imageViewCanvas.drawCircle(x, y, circleRadius, gesturePaint);
 
-            drawArrowhead(imageViewCanvas, (float)(x+(arrowDistance+arrowLength)*Math.cos(angle)), (float)(y+(arrowDistance+arrowLength)*Math.sin(angle)),
+            drawArrowhead(imageViewCanvas, (float)(x+(arrowDistance)*Math.cos(angle)), (float)(y+(arrowDistance)*Math.sin(angle)),
                     arrowLength, angle);
-            drawArrowhead(imageViewCanvas, (float)(x-(arrowDistance+arrowLength)*Math.cos(angle)), (float)(y-(arrowDistance+arrowLength)*Math.sin(angle)),
+            drawArrowhead(imageViewCanvas, (float)(x-(arrowDistance)*Math.cos(angle)), (float)(y-(arrowDistance)*Math.sin(angle)),
                     arrowLength, angle+Math.PI);
 
             imageView.setImageBitmap(imageViewBitmap);
@@ -259,9 +297,15 @@ public class GestureEvent {
                     + ","
                     + (this.y + locationOnScreen[1]);
         }
+        public int getX(){
+            return this.x;
+        }
+        public int getY(){
+            return this.y;
+        }
     }
 
-    class SwipeUp implements Gesture {
+    public class SwipeUp implements Gesture {
         private final int x;
         private final int y;
 
@@ -281,9 +325,15 @@ public class GestureEvent {
                     + ","
                     + (this.y + locationOnScreen[1]);
         }
+        public int getX(){
+            return this.x;
+        }
+        public int getY(){
+            return this.y;
+        }
     }
 
-    class SwipeDown implements Gesture {
+    public class SwipeDown implements Gesture {
         private final int x;
         private final int y;
 
@@ -303,9 +353,15 @@ public class GestureEvent {
                     + ","
                     + (this.y + locationOnScreen[1]);
         }
+        public int getX(){
+            return this.x;
+        }
+        public int getY(){
+            return this.y;
+        }
     }
 
-    class SwipeLeft implements Gesture {
+    public class SwipeLeft implements Gesture {
         private final int x;
         private final int y;
 
@@ -325,9 +381,15 @@ public class GestureEvent {
                     + ","
                     + (this.y + locationOnScreen[1]);
         }
+        public int getX(){
+            return this.x;
+        }
+        public int getY(){
+            return this.y;
+        }
     }
 
-    class SwipeRight implements Gesture {
+    public class SwipeRight implements Gesture {
         private final int x;
         private final int y;
 
@@ -346,6 +408,12 @@ public class GestureEvent {
                     + (this.x + locationOnScreen[0])
                     + ","
                     + (this.y + locationOnScreen[1]);
+        }
+        public int getX(){
+            return this.x;
+        }
+        public int getY(){
+            return this.y;
         }
     }
 
