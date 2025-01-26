@@ -1,6 +1,7 @@
 package com.google.xrinput;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.os.CountDownTimer;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 import android.graphics.Canvas;
@@ -13,6 +14,9 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import java.util.List;
 import android.os.Handler;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 
 public class PathEvent {
@@ -47,11 +51,16 @@ public class PathEvent {
     private boolean gesturePathBool = true;
     private boolean terminate = false;
     private int freeformDuration;
+    private TextView timerView;
+    private CountDownTimer countDownTimer;
+    private TextView gestureText;
 
-    public PathEvent(ImageView display, ImageView drawView){
+    public PathEvent(ImageView display, ImageView drawView, TextView timerView, TextView gestureText){
 //        set some variables
         image_view = display;
         draw_view = drawView;
+        this.gestureText = gestureText;
+        this.timerView = timerView;
         width = image_view.getWidth();
         height = image_view.getHeight();
         MIN_LENGTH = (int)(Math.min(width, height)*0.75);
@@ -143,6 +152,7 @@ public class PathEvent {
 
     private void nextPath(){
         background.drawColor(Color.BLACK);
+        gestureText.setText("");
         updateLocations();
 
         if (terminate){
@@ -154,9 +164,12 @@ public class PathEvent {
             curr.draw();
 
             if (curr instanceof FreeForm){
+                gestureText.setText("Freeform");
+                startCountdown(freeformDuration/1000);
                 new Handler().postDelayed(this::clearCanvas, freeformDuration);
                 new Handler().postDelayed(this::nextPath, freeformDuration+1000);
             } else {
+                startCountdown(8);
                 new Handler().postDelayed(this::clearCanvas, 8000);
                 new Handler().postDelayed(this::nextPath, 10000);
             }
@@ -199,6 +212,26 @@ public class PathEvent {
         drawArea.drawPath(gesturePath, gesturePathPaint);
         draw_view.setImageBitmap(drawBitmap);
         image_view.setImageBitmap(bitmap);
+    }
+
+    private void startCountdown(int seconds) {
+        // Convert seconds to milliseconds for the CountDownTimer
+        countDownTimer = new CountDownTimer(seconds * 1000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                // Update the TextView with the remaining time
+                String secondsRemaining = ""+(int) (millisUntilFinished / 1000);
+                timerView.setText(secondsRemaining);
+            }
+
+            @Override
+            public void onFinish() {
+                // Set the TextView to indicate the timer is done
+                timerView.setText("");
+            }
+        };
+        // Start the timer
+        countDownTimer.start();
     }
 
     public interface PathShape{
@@ -391,14 +424,15 @@ public class PathEvent {
     private class Static implements PathShape {
         int x;
         int y;
+        int radius = 100;
 
         private Static(){
-            x = 20 + random.nextInt(width - 20);
-            y = 20 + random.nextInt(height - 20);
+            x = radius + random.nextInt(width - 2*radius);
+            y = radius + random.nextInt(height - 2*radius);
         }
 
         public void draw(){
-            background.drawCircle(x, y, 20, gestureShapePaint);
+            background.drawCircle(x, y, radius, gestureShapePaint);
             image_view.setImageBitmap(bitmap);
         }
 

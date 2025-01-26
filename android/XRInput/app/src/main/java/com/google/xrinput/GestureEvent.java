@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.widget.ImageView;
@@ -46,11 +47,14 @@ public class GestureEvent {
     private final int circleRadius = 50;
     private final int arrowDistance = 250;
     private final int arrowLength = 100;
+    private TextView timerView;
+    public boolean negative = false;
 
-    public GestureEvent(ImageView display, ImageView drawView, TextView gestureText) {
+    public GestureEvent(ImageView display, ImageView drawView, TextView timerView, TextView gestureText) {
         imageView = display;
         this.drawView = drawView;
         this.gestureText = gestureText;
+        this.timerView = timerView;
         height = display.getHeight();
         width = display.getWidth();
         random = new Random();
@@ -129,9 +133,32 @@ public class GestureEvent {
             Gesture curr =  gestureStack.remove(gestureStack.size()-1);
             active = curr;
             curr.draw();
-//            new Handler().postDelayed(this::clearCanvas, 3000);
-//            new Handler().postDelayed(this::nextGesture, 5000);
+
+            if (negative){
+                startCountdown(3);
+                new Handler().postDelayed(this::clearCanvas, 3000);
+                new Handler().postDelayed(this::nextGesture, 5000);
+            }
         }
+    }
+    private void startCountdown(int seconds) {
+        // Convert seconds to milliseconds for the CountDownTimer
+        CountDownTimer countDownTimer = new CountDownTimer(seconds * 1000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                // Update the TextView with the remaining time
+                String secondsRemaining = ""+(int) (millisUntilFinished / 1000);
+                timerView.setText(secondsRemaining);
+            }
+
+            @Override
+            public void onFinish() {
+                // Set the TextView to indicate the timer is done
+                timerView.setText("");
+            }
+        };
+        // Start the timer
+        countDownTimer.start();
     }
 
     public void sendTouchSignal(MotionEvent event, Class<?> class_){
@@ -140,13 +167,13 @@ public class GestureEvent {
 
             if (class_ == Tap.class || class_ == DoubleTap.class){
                 double distance = Math.sqrt(Math.pow(active.getX()-event.getX(), 2) + Math.pow(active.getX()-event.getX(), 2));
-                if (distance <= 50){
+                if (distance <= 100){
                     clearCanvas();
-                    new Handler().postDelayed(this::nextGesture, 2000);
+                    new Handler().postDelayed(this::nextGesture, 1500);
                 }
             } else {
                 clearCanvas();
-                new Handler().postDelayed(this::nextGesture, 2000);
+                new Handler().postDelayed(this::nextGesture, 1500);
             }
         }
     }

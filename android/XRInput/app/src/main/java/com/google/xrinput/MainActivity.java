@@ -16,6 +16,8 @@
 
 package com.google.xrinput;
 
+import android.os.CountDownTimer;
+import android.os.Looper;
 import android.text.InputType;
 import android.widget.ImageView;
 import android.graphics.Canvas;
@@ -102,11 +104,13 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private TextView hmdIPText;
   private TextView positionText;
   private TextView orientationText;
+  private TextView timerView;
   private Button connectButton;
   private Button editHMDaddressButton;
   private Button activityButton;
   private Button gestureActivityButton;
   private Switch toggleARCoreSwitch;
+  private Switch toggleNegativeSwitch;
   private String hmdIPstring = "192.168.0.1";
   private GradientDrawable connectionIndicator;
 
@@ -126,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private PathEvent pathEvent;
   private GestureEvent gestureEvent;
   private TextView gestureText;
+  boolean tempNegative = false;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -167,10 +172,22 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
                 }
               }
               if (pathEvent.active != null){
-                communicationHandler.sendGesturePathActivity(pathEvent.active.repr());
+
+                if (tempNegative){
+                  communicationHandler.sendGesturePathActivity(pathEvent.active.repr()+",NEGATIVE");
+                } else {
+                  communicationHandler.sendGesturePathActivity(pathEvent.active.repr()+",POSITIVE");
+                }
+
               }
+
               if (gestureEvent.active != null){
-                communicationHandler.sendGestureActivity(gestureEvent.active.repr());
+                if (tempNegative){
+                  communicationHandler.sendGestureActivity(gestureEvent.active.repr() + ",NEGATIVE");
+                } else {
+                  communicationHandler.sendGestureActivity(gestureEvent.active.repr()+ ",POSITIVE");
+                }
+
               }
 
               // Sensors
@@ -427,21 +444,29 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     // Load last HMD IP Address from memory
     SharedPreferences sharedPref = getSharedPreferences("DeviceInputXRPreferences", MODE_PRIVATE);
     hmdIPstring = sharedPref.getString("hmdIPstring", hmdIPstring);
-
     // Initialize event background
     gestureText = findViewById(R.id.gesture_text);
+    timerView = findViewById(R.id.gesture_timer_text);
 //    ImageView imageView = findViewById(R.id.image_view);
     ImageView drawView = findViewById(R.id.draw_view);
     ImageView touchView = findViewById(R.id.touchview);
-    touchView.post(new Runnable() {
+
+    Handler handler = new Handler(Looper.getMainLooper());
+
+    handler.postDelayed(new Runnable() {
       @Override
       public void run() {
-        // Now the ImageView is fully laid out, and its dimensions are set
-        pathEvent = new PathEvent(touchView, drawView);
-        gestureEvent = new GestureEvent(touchView, drawView, gestureText);
+        // Create events after timerView processing is complete
+        pathEvent = new PathEvent(touchView, drawView, timerView, gestureText);
+        gestureEvent = new GestureEvent(touchView, drawView, timerView, gestureText);
+        gestureEvent.negative = tempNegative;
+
+        // Set events to the touch handler
         touchHandler.setEvents(pathEvent, gestureEvent);
       }
-    });
+    }, 0); // Post immediately to the main thread
+
+
 
     // Initialize buttons
     connectButton = findViewById(R.id.connect_button);
@@ -486,6 +511,19 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             }
           }
         });
+
+    toggleNegativeSwitch = findViewById(R.id.negative_toggle);
+    toggleNegativeSwitch.setOnCheckedChangeListener(
+            new CompoundButton.OnCheckedChangeListener() {
+              //              @Override
+              public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                tempNegative = isChecked;
+                if (gestureEvent != null){
+                  gestureEvent.negative = isChecked;
+                }
+              }
+            });
+
 
     toggleARCoreSwitch = findViewById(R.id.arcore_toggle);
     toggleARCoreSwitch.setOnCheckedChangeListener(
