@@ -427,7 +427,7 @@ public class PathEvent {
         arrowPath.lineTo(arrowPointX2, arrowPointY2);  // Right point of the arrow
         arrowPath.close();
 
-        canvas.drawPath(arrowPath, arrowPaint);
+//        canvas.drawPath(arrowPath, arrowPaint);
     }
 
 

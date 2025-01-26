@@ -257,6 +257,16 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+      <TextView
+          android:id="@+id/gesture_text"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:textAlignment="center"
+          android:textSize="75sp"
+          android:textStyle="bold">
+
+      </TextView>
+
       <ImageView
           android:id="@+id/draw_view"
           android:layout_width="match_parent"

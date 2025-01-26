@@ -68,6 +68,9 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
+
+import org.w3c.dom.Text;
+
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -86,7 +89,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements SampleRender.Renderer {
 
   private static final String TAG = MainActivity.class.getSimpleName();
-  private static final Boolean USE_AR_CORE = true;
+  private static final Boolean USE_AR_CORE = false;
 
   // Main ARCore Variables (NOTE: more below)
   private Session session;
@@ -122,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
   private PathEvent pathEvent;
   private GestureEvent gestureEvent;
+  private TextView gestureText;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -425,7 +429,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     hmdIPstring = sharedPref.getString("hmdIPstring", hmdIPstring);
 
     // Initialize event background
-
+    gestureText = findViewById(R.id.gesture_text);
 //    ImageView imageView = findViewById(R.id.image_view);
     ImageView drawView = findViewById(R.id.draw_view);
     ImageView touchView = findViewById(R.id.touchview);
@@ -434,7 +438,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
       public void run() {
         // Now the ImageView is fully laid out, and its dimensions are set
         pathEvent = new PathEvent(touchView, drawView);
-        gestureEvent = new GestureEvent(touchView, drawView);
+        gestureEvent = new GestureEvent(touchView, drawView, gestureText);
         touchHandler.setEvents(pathEvent, gestureEvent);
       }
     });

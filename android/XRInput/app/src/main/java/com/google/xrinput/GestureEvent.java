@@ -7,6 +7,7 @@ import android.graphics.Path;
 import android.os.Handler;
 import android.widget.ImageView;
 import android.graphics.Color;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,10 +41,15 @@ public class GestureEvent {
     private int numSwipeLeft;
     private int numSwipeRight;
     private boolean terminate = false;
+    private TextView gestureText;
+    private final int circleRadius = 50;
+    private final int arrowDistance = 150;
+    private final int arrowLength = 100;
 
-    public GestureEvent(ImageView display, ImageView drawView) {
+    public GestureEvent(ImageView display, ImageView drawView, TextView gestureText) {
         imageView = display;
         this.drawView = drawView;
+        this.gestureText = gestureText;
         height = display.getHeight();
         width = display.getWidth();
         random = new Random();
@@ -111,6 +117,7 @@ public class GestureEvent {
     }
 
     private void nextGesture(){
+        gestureText.setText("");
         imageViewCanvas.drawColor(Color.BLACK);
         updateLocations();
 
@@ -121,8 +128,8 @@ public class GestureEvent {
             Gesture curr =  gestureStack.remove(gestureStack.size()-1);
             active = curr;
             curr.draw();
-            new Handler().postDelayed(this::clearCanvas, 5000);
-            new Handler().postDelayed(this::nextGesture, 7000);
+            new Handler().postDelayed(this::clearCanvas, 3000);
+            new Handler().postDelayed(this::nextGesture, 5000);
         }
     }
 
@@ -146,13 +153,14 @@ public class GestureEvent {
         private final int x;
         private final int y;
         private Tap(){
-            x = random.nextInt(width-40) + 20;
-            y = random.nextInt(height-40) + 20;
+            x = random.nextInt(width-2*circleRadius) + circleRadius;
+            y = random.nextInt(height-2*circleRadius) + circleRadius;
         }
 
         public void draw(){
-            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            imageViewCanvas.drawCircle(x, y, circleRadius, gesturePaint);
             imageView.setImageBitmap(imageViewBitmap);
+            gestureText.setText("Tap");
         }
 
         public String repr(){
@@ -168,17 +176,18 @@ public class GestureEvent {
         private final int y;
 
         private DoubleTap(){
-            x = random.nextInt(width-60) + 30;
-            y = random.nextInt(height-60) + 30;
+            x = random.nextInt(width-2*(circleRadius+20)) + circleRadius + 20;
+            y = random.nextInt(height-2*(circleRadius+20)) + circleRadius + 20;
         }
 
         public void draw(){
-            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            imageViewCanvas.drawCircle(x, y, circleRadius, gesturePaint);
             gesturePaint.setStyle(Paint.Style.STROKE);
-            imageViewCanvas.drawCircle(x, y, 30, gesturePaint);
+            imageViewCanvas.drawCircle(x, y, circleRadius+20, gesturePaint);
             gesturePaint.setStyle(Paint.Style.FILL);
 
             imageView.setImageBitmap(imageViewBitmap);
+            gestureText.setText("Double Tap");
         }
 
         public String repr(){
@@ -196,29 +205,28 @@ public class GestureEvent {
         private final double angle;
 
         private PinchIn(){
-            x = random.nextInt(width-60-150) + 30 + 75;
-            y = random.nextInt(height-60-150) + 30 + 75;
-            angle = Math.random() * (Math.PI);
+            x = random.nextInt(width-2*circleRadius-2*arrowDistance) + circleRadius + arrowDistance;
+            y = random.nextInt(height-2*circleRadius-2*arrowDistance) + circleRadius + arrowDistance;
+            angle = Math.random() * (Math.PI/2) + Math.PI/2;
         }
 
         public void draw(){
-            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            imageViewCanvas.drawCircle(x, y, circleRadius, gesturePaint);
 
-            drawArrowhead(imageViewCanvas, (float)(x+50*Math.cos(angle)), (float)(y+50*Math.sin(angle)),
-                    30, angle+Math.PI);
-            drawArrowhead(imageViewCanvas, (float)(x-50*Math.cos(angle)), (float)(y-50*Math.sin(angle)),
-                    30, angle);
+            drawArrowhead(imageViewCanvas, (float)(x+arrowLength*Math.cos(angle)), (float)(y+arrowLength*Math.sin(angle)),
+                    arrowLength, angle+Math.PI);
+            drawArrowhead(imageViewCanvas, (float)(x-arrowLength*Math.cos(angle)), (float)(y-arrowLength*Math.sin(angle)),
+                    arrowLength, angle);
 
             imageView.setImageBitmap(imageViewBitmap);
+            gestureText.setText("Pinch In");
         }
 
         public String repr(){
             return "PINCH_IN,"
                     + (this.x + locationOnScreen[0])
                     + ","
-                    + (this.y + locationOnScreen[1])
-                    + ","
-                    + angle;
+                    + (this.y + locationOnScreen[1]);
         }
     }
 
@@ -228,29 +236,28 @@ public class GestureEvent {
         private final double angle;
 
         private PinchOut(){
-            x = random.nextInt(width-60-150) + 30 + 75;
-            y = random.nextInt(height-60-150) + 30 + 75;
-            angle = Math.random() * (Math.PI);
+            x = random.nextInt(width-2*circleRadius-2*(arrowDistance+arrowLength)) + circleRadius + (arrowDistance+arrowLength);
+            y = random.nextInt(height-2*circleRadius-2*(arrowDistance+arrowLength)) + circleRadius + (arrowDistance+arrowLength);
+            angle = Math.random() * (Math.PI/2) + Math.PI/2;
         }
 
         public void draw(){
-            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
+            imageViewCanvas.drawCircle(x, y, circleRadius, gesturePaint);
 
-            drawArrowhead(imageViewCanvas, (float)(x+75*Math.cos(angle)), (float)(y+75*Math.sin(angle)),
-                    30, angle);
-            drawArrowhead(imageViewCanvas, (float)(x-75*Math.cos(angle)), (float)(y-75*Math.sin(angle)),
-                    30, angle+Math.PI);
+            drawArrowhead(imageViewCanvas, (float)(x+(arrowDistance+arrowLength)*Math.cos(angle)), (float)(y+(arrowDistance+arrowLength)*Math.sin(angle)),
+                    arrowLength, angle);
+            drawArrowhead(imageViewCanvas, (float)(x-(arrowDistance+arrowLength)*Math.cos(angle)), (float)(y-(arrowDistance+arrowLength)*Math.sin(angle)),
+                    arrowLength, angle+Math.PI);
 
             imageView.setImageBitmap(imageViewBitmap);
+            gestureText.setText("Pinch Out");
         }
 
         public String repr(){
             return "PINCH_OUT,"
                     + (this.x + locationOnScreen[0])
                     + ","
-                    + (this.y + locationOnScreen[1])
-                    + ","
-                    + angle;
+                    + (this.y + locationOnScreen[1]);
         }
     }
 
@@ -259,13 +266,14 @@ public class GestureEvent {
         private final int y;
 
         private SwipeUp(){
-            x = random.nextInt(width-40) + 20;
-            y = random.nextInt(height-40-75) + 20 + 75;
+            x = random.nextInt(width-2*circleRadius) + circleRadius;
+            y = random.nextInt(height-2*circleRadius-arrowDistance) + circleRadius + arrowDistance;
         }
         public void draw(){
-            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
-            imageViewCanvas.drawLine(x, y, x, y-75, gesturePaint);
-            drawArrowhead(imageViewCanvas, x, y-75, 30, 3*Math.PI/2);
+            imageViewCanvas.drawCircle(x, y, circleRadius, gesturePaint);
+            imageViewCanvas.drawLine(x, y, x, y-arrowDistance, gesturePaint);
+            drawArrowhead(imageViewCanvas, x, y-arrowDistance, arrowLength, 3*Math.PI/2);
+            gestureText.setText("Swipe Up");
         }
         public String repr(){
             return "SWIPE_UP,"
@@ -280,13 +288,14 @@ public class GestureEvent {
         private final int y;
 
         private SwipeDown(){
-            x = random.nextInt(width-40) + 20;
-            y = random.nextInt(height-40 - 75) + 20;
+            x = random.nextInt(width-2*circleRadius) + circleRadius;
+            y = random.nextInt(height-2*circleRadius - arrowDistance) + circleRadius;
         }
         public void draw(){
-            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
-            imageViewCanvas.drawLine(x, y, x, y+75, gesturePaint);
-            drawArrowhead(imageViewCanvas, x, y+75, 30, Math.PI/2);
+            imageViewCanvas.drawCircle(x, y, circleRadius, gesturePaint);
+            imageViewCanvas.drawLine(x, y, x, y+arrowDistance, gesturePaint);
+            drawArrowhead(imageViewCanvas, x, y+arrowDistance, arrowLength, Math.PI/2);
+            gestureText.setText("Swipe Down");
         }
         public String repr(){
             return "SWIPE_DOWN,"
@@ -301,13 +310,14 @@ public class GestureEvent {
         private final int y;
 
         private SwipeLeft(){
-            x = random.nextInt(width-40-75) + 20 + 75;
-            y = random.nextInt(height-40) + 20;
+            x = random.nextInt(width-2*circleRadius-arrowDistance) + circleRadius + arrowDistance;
+            y = random.nextInt(height-2*circleRadius) + circleRadius;
         }
         public void draw(){
-            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
-            imageViewCanvas.drawLine(x, y, x-75, y, gesturePaint);
-            drawArrowhead(imageViewCanvas, x-75, y, 30, Math.PI);
+            imageViewCanvas.drawCircle(x, y, circleRadius, gesturePaint);
+            imageViewCanvas.drawLine(x, y, x-arrowDistance, y, gesturePaint);
+            drawArrowhead(imageViewCanvas, x-arrowDistance, y, arrowLength, Math.PI);
+            gestureText.setText("Swipe Left");
         }
         public String repr(){
             return "SWIPE_LEFT,"
@@ -322,13 +332,14 @@ public class GestureEvent {
         private final int y;
 
         private SwipeRight(){
-            x = random.nextInt(width-40 - 75) + 20;
-            y = random.nextInt(height-40) + 20;
+            x = random.nextInt(width-2*circleRadius - arrowDistance) + circleRadius;
+            y = random.nextInt(height-2*circleRadius) + circleRadius;
         }
         public void draw(){
-            imageViewCanvas.drawCircle(x, y, 20, gesturePaint);
-            imageViewCanvas.drawLine(x, y, x+75, y, gesturePaint);
-            drawArrowhead(imageViewCanvas, x+75, y, 30, 0);
+            imageViewCanvas.drawCircle(x, y, circleRadius, gesturePaint);
+            imageViewCanvas.drawLine(x, y, x+arrowDistance, y, gesturePaint);
+            drawArrowhead(imageViewCanvas, x+arrowDistance, y, arrowLength, 0);
+            gestureText.setText("Swipe Right");
         }
         public String repr(){
             return "SWIPE_RIGHT,"
