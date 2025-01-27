@@ -23,8 +23,8 @@ public class PathEvent {
     private final Canvas background;
     private final Bitmap bitmap;
     private final ImageView image_view;
-    final private int width;
-    final private int height;
+    private int width;
+    private int height;
     final private Random random;
 
     private Path gesturePath;
@@ -32,7 +32,7 @@ public class PathEvent {
     private Paint erasePaint;
     private Paint gestureShapePaint;
 
-    private List<PathShape> gestureStack;
+    private final List<PathShape> gestureStack;
 
     private int numHorizontalLines;
     private int numVerticalLines;
@@ -54,6 +54,7 @@ public class PathEvent {
     private TextView timerView;
     private CountDownTimer countDownTimer;
     private TextView gestureText;
+    private int duration = 8000;
 
     public PathEvent(ImageView display, ImageView drawView, TextView timerView, TextView gestureText){
 //        set some variables
@@ -136,6 +137,8 @@ public class PathEvent {
 
     private void updateLocations(){
         locationOnScreen = new int[2];
+        height = image_view.getHeight();
+        width = image_view.getWidth();
         image_view.getLocationOnScreen(locationOnScreen);
     }
 
@@ -148,6 +151,7 @@ public class PathEvent {
         numCircles = counts[4];
         numStatics = counts[5];
         freeformDuration = counts[6] * 1000;
+        duration = counts[7] * 1000;
     }
 
     private void nextPath(){
@@ -156,6 +160,7 @@ public class PathEvent {
         updateLocations();
 
         if (terminate){
+            active = null;
             return;
         }
         if (!gestureStack.isEmpty()){
@@ -169,9 +174,9 @@ public class PathEvent {
                 new Handler().postDelayed(this::clearCanvas, freeformDuration);
                 new Handler().postDelayed(this::nextPath, freeformDuration+1000);
             } else {
-                startCountdown(8);
-                new Handler().postDelayed(this::clearCanvas, 8000);
-                new Handler().postDelayed(this::nextPath, 10000);
+                startCountdown(duration/1000);
+                new Handler().postDelayed(this::clearCanvas, duration);
+                new Handler().postDelayed(this::nextPath, duration+1500);
             }
         }
     }

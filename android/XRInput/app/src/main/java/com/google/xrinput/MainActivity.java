@@ -181,13 +181,17 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
               }
 
-              if (gestureEvent.active != null){
+              else if (gestureEvent.active != null){
                 if (tempNegative){
                   communicationHandler.sendGestureActivity(gestureEvent.active.repr() + ",NEGATIVE");
                 } else {
                   communicationHandler.sendGestureActivity(gestureEvent.active.repr()+ ",POSITIVE");
                 }
 
+              }
+
+              else {
+                communicationHandler.sendGestureActivity("NO_EVENT");
               }
 
               // Sensors
@@ -286,7 +290,6 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private void initCommunicationHandler() {
     communicationHandler =  new CommunicationHandler(MainActivity.this);
   }
-
   private void disableSystemGestures() {
     // Disable system gestures on left and right edge to prevent accidental app closing
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -313,10 +316,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     layout.setOrientation(LinearLayout.VERTICAL);
 
     // Create 6 input fields
-    final EditText[] inputFields = new EditText[2];
-    final String[] labels = {"Enter Count:", "Freeform Duration"};
+    final EditText[] inputFields = new EditText[3];
+    final String[] labels = {"Path Count", "Freeform Duration", "Path Duration"};
 
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
       TextView label = new TextView(this);
       label.setText(labels[i]);
       layout.addView(label);
@@ -330,15 +333,15 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
     // Build the dialog
     new AlertDialog.Builder(this)
-            .setTitle("Customize Path Counts")
+            .setTitle("Customize Path Activity")
             .setView(layout) // Set the custom layout
             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int which) {
-                int[] numbers = new int[2];
+                int[] numbers = new int[3];
                 boolean allValid = true;
 
-                for (int i = 0; i < 2; i++) {
+                for (int i = 0; i < 3; i++) {
                   String input = inputFields[i].getText().toString();
                   if (!input.isEmpty()) {
                     try {
@@ -371,10 +374,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     layout.setOrientation(LinearLayout.VERTICAL);
 
     // Create 6 input fields
-    final EditText[] inputFields = new EditText[1];
-    final String[] labels = {"Enter Counts"};
+    final EditText[] inputFields = new EditText[2];
+    final String[] labels = {"Enter Counts", "Touch Radius"};
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 2; i++) {
       TextView label = new TextView(this);
       label.setText(labels[i]);
       layout.addView(label);
@@ -393,10 +396,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             .setPositiveButton("OK", new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int which) {
-                int[] numbers = new int[1];
+                int[] numbers = new int[2];
                 boolean allValid = true;
 
-                for (int i = 0; i < 1; i++) {
+                for (int i = 0; i < 2; i++) {
                   String input = inputFields[i].getText().toString();
                   if (!input.isEmpty()) {
                     try {
@@ -424,17 +427,19 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   }
 
   private void processPathNumbers(int[] numbers) {
-    int[] counts = new int[7];
+    int[] counts = new int[8];
     Arrays.fill(counts, numbers[0]);
     counts[6] = numbers[1];
+    counts[7] = numbers[2];
     pathEvent.enableGesturePath();
     pathEvent.setCounts(counts);
     pathEvent.start();
   }
 
   private void processGestureNumbers(int[] numbers) {
-    int[] counts = new int[8];
+    int[] counts = new int[9];
     Arrays.fill(counts, numbers[0]);
+    counts[8] = numbers[1];
     gestureEvent.setCounts(counts);
     gestureEvent.start();
     pathEvent.disableGesturePath();

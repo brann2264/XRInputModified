@@ -21,18 +21,17 @@ public class GestureEvent {
     private ImageView drawView;
     private int height;
     private int width;
-    private Random random;
+    private final Random random;
 
-    private Bitmap imageViewBitmap;
-    private Bitmap drawViewBitmap;
-    private Canvas imageViewCanvas;
+    private final Bitmap imageViewBitmap;
+    private final Canvas imageViewCanvas;
     private Canvas drawViewCanvas;
     private int[] locationOnScreen;
-    private Paint gesturePaint;
+    private final Paint gesturePaint;
     private Paint drawPaint;
     public Gesture active;
 
-    private List<Gesture> gestureStack;
+    private final List<Gesture> gestureStack;
 
     private int numTaps;
     private int numDoubleTaps;
@@ -43,12 +42,13 @@ public class GestureEvent {
     private int numSwipeLeft;
     private int numSwipeRight;
     private boolean terminate = false;
-    private TextView gestureText;
+    private final TextView gestureText;
     private final int circleRadius = 50;
-    private final int arrowDistance = 250;
+    private final int arrowDistance = 350;
     private final int arrowLength = 100;
-    private TextView timerView;
+    private final TextView timerView;
     public boolean negative = false;
+    private int distanceThreshold = 200;
 
     public GestureEvent(ImageView display, ImageView drawView, TextView timerView, TextView gestureText) {
         imageView = display;
@@ -59,7 +59,7 @@ public class GestureEvent {
         width = display.getWidth();
         random = new Random();
         imageViewBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        drawViewBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Bitmap drawViewBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         imageViewCanvas = new Canvas(imageViewBitmap);
         drawViewCanvas = new Canvas(drawViewBitmap);
 
@@ -110,6 +110,13 @@ public class GestureEvent {
         terminate = true;
     }
 
+    private void updateLocations(){
+        locationOnScreen = new int[2];
+        height = imageView.getHeight();
+        width = imageView.getWidth();
+        imageView.getLocationOnScreen(locationOnScreen);
+    }
+
     public void setCounts(int[] counts){
         numTaps = counts[0];
         numDoubleTaps = counts[1];
@@ -119,6 +126,7 @@ public class GestureEvent {
         numSwipeDown = counts[5];
         numSwipeLeft = counts[6];
         numSwipeRight = counts[7];
+        distanceThreshold = counts[8];
     }
 
     private void nextGesture(){
@@ -127,6 +135,7 @@ public class GestureEvent {
         updateLocations();
 
         if (terminate){
+            active = null;
             return;
         }
         if (!gestureStack.isEmpty()){
@@ -163,11 +172,15 @@ public class GestureEvent {
 
     public void sendTouchSignal(MotionEvent event, Class<?> class_){
 
+        if (negative){
+            return;
+        }
+
         if (class_.isInstance(active)) {
 
             if (class_ == Tap.class || class_ == DoubleTap.class){
                 double distance = Math.sqrt(Math.pow(active.getX()-event.getX(), 2) + Math.pow(active.getX()-event.getX(), 2));
-                if (distance <= 100){
+                if (distance <= distanceThreshold){
                     clearCanvas();
                     new Handler().postDelayed(this::nextGesture, 1500);
                 }
@@ -182,11 +195,6 @@ public class GestureEvent {
         imageViewCanvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);
         imageView.invalidate();
         active = null;
-    }
-
-    private void updateLocations(){
-        locationOnScreen = new int[2];
-        imageView.getLocationOnScreen(locationOnScreen);
     }
 
     public interface Gesture {
@@ -211,7 +219,7 @@ public class GestureEvent {
         }
 
         public String repr(){
-            return "TAP,"
+            return "SINGLE_TAP,"
                     + (this.x + locationOnScreen[0])
                     + ","
                     + (this.y + locationOnScreen[1]);
