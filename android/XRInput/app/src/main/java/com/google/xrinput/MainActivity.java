@@ -318,6 +318,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     // Create 6 input fields
     final EditText[] inputFields = new EditText[3];
     final String[] labels = {"Path Count", "Freeform Duration", "Path Duration"};
+    final String[] defaultValues = {"5", "60", "8"};
 
     for (int i = 0; i < 3; i++) {
       TextView label = new TextView(this);
@@ -326,6 +327,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
       EditText inputField = new EditText(this);
       inputField.setInputType(InputType.TYPE_CLASS_NUMBER);
+      inputField.setText(defaultValues[i]);
       layout.addView(inputField);
 
       inputFields[i] = inputField; // Store reference to each input field
@@ -373,9 +375,9 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     LinearLayout layout = new LinearLayout(this);
     layout.setOrientation(LinearLayout.VERTICAL);
 
-    // Create 6 input fields
     final EditText[] inputFields = new EditText[2];
     final String[] labels = {"Enter Counts", "Touch Radius"};
+    final String[] defaultValues = {"20", "150"};
 
     for (int i = 0; i < 2; i++) {
       TextView label = new TextView(this);
@@ -384,6 +386,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
       EditText inputField = new EditText(this);
       inputField.setInputType(InputType.TYPE_CLASS_NUMBER);
+      inputField.setText(defaultValues[i]);
       layout.addView(inputField);
 
       inputFields[i] = inputField; // Store reference to each input field
